@@ -3,7 +3,7 @@ Switch fast between open windows (Windows tool)
 
 ## Installation
 
-Download the latest release, and start the .exe
+Download the latest release and start the .exe
 
 ## Usage
 
