@@ -1,6 +1,17 @@
 # iSwitch
 Switch fast between open windows (Windows tool)
 
+## Installation
+
+Download the latest release, and start the .exe
+
+## Usage
+
+Use caps-lock to show the window.
+
+When the window is open, just type a few letters matching the desired window's title.
+
+
 
 ![plot](./media/demo.gif)
 
