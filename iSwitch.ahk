@@ -111,7 +111,14 @@ if activateselectioninbg <>
 ; List of subtsrings separated with pipe (|) characters (e.g. carpe|diem). 
 ; Window titles containing any of the listed substrings are filtered out 
 ; from the list of windows. 
-filterlist = asticky|blackbox
+; list is loaded from file filterlist.txt
+; example asticky|blackbox|app center
+FileRead, filterlist, filterlist.txt
+
+; List of shortcuts for window titles
+; one shortcut per line
+; example: tb|thunderbird
+FileRead, shortcutslist, shortcutslist.txt
 
 ; Set this yes to update the list of windows every time the contents of the 
 ; listbox is updated. This is usually not necessary and it is an overhead which 
@@ -149,6 +156,8 @@ if nomatchsound <>
 ;     switcher_id    - the window ID of the switcher window 
 ;     filters        - array of filters for filtering out titles 
 ;                      from the window list 
+;     shortcuts        - array of shortcuts for filtering out titles 
+;                      from the window list 
 ; 
 ;---------------------------------------------------------------------- 
 
@@ -166,6 +175,7 @@ Gui,Font,s15 cYellow bold,Calibri
 Gui, Add, ListBox, vindex gListBoxClick x-2 y-2 w810 h602 AltSubmit -VScroll
 ;end of modifications by ezuk
 
+
 if filterlist <> 
 { 
     loop, parse, filterlist, | 
@@ -174,12 +184,57 @@ if filterlist <>
     } 
 } 
 
+shortcuts := []   
+amountOfShortcuts := 0
+if shortcutslist <> 
+{ 
+    index := 0
+    loop, parse, shortcutslist, `n, `r
+    { 
+        ;d := [] 
+        ;shortcuts%a_index% = %A_LoopField% 
+        
+        ;MsgBox, %A_LoopField% 
+        StringSplit, cArray, A_LoopField, | 
+        val = %cArray2%
+        ;MsgBox, %val%
+        ; string split pipe
+        val = %cArray1%
+        shortcuts[index, 0] := val
+        ;d.Push(1)
+        val = %cArray2%
+        shortcuts[index, 1] := val
+        ;d.Push(2)
+        ;MsgBox, %d%
+        ;c.Push(d)
+        index := index + 1 
+       
+    } 
+
+    amountOfShortcuts := index 
+} 
+
+;M sgBox, %amountOfShortcuts%
+;search = tb
+
+
+
+;MsgBox, % shortcuts[1][1] 
 ;---------------------------------------------------------------------- 
 ; 
 ; I never use the CapsLock key, that's why I chose it. 
 ; 
 CapsLock:: 
+    GoSub, HotkeyAction
+return
 
+/*
+^!c::
+    GoSub, HotkeyAction
+return
+*/
+
+HotkeyAction:
 search = 
 numallwin = 0 
 GuiControl,, Edit1 
@@ -346,6 +401,22 @@ Loop
     ; process typed character 
 
     search = %search%%input% 
+    ; check if the search matches a shortcut
+    ; iterate shortcuts
+    index = 0
+    Loop, %amountOfShortcuts%
+    {
+        cVal := % shortcuts[index, 0]        
+        ;M sgBox, %search% %cVal%
+        if(search = cVal)
+        {
+            search = % shortcuts[index, 1]
+            break
+        }    
+        index := index + 1
+    }    
+
+    ;ToolTip, %search%
     GuiControl,, Edit1, %search% 
     GoSub, RefreshWindowList 
 } 
