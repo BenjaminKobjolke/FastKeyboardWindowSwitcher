@@ -111,7 +111,9 @@ if activateselectioninbg <>
 ; List of subtsrings separated with pipe (|) characters (e.g. carpe|diem). 
 ; Window titles containing any of the listed substrings are filtered out 
 ; from the list of windows. 
-filterlist = asticky|blackbox
+; list is loaded from file filterlist.txt
+; example asticky|blackbox|app center
+FileRead, filterlist, filterlist.txt
 
 ; Set this yes to update the list of windows every time the contents of the 
 ; listbox is updated. This is usually not necessary and it is an overhead which 
@@ -179,7 +181,14 @@ if filterlist <>
 ; I never use the CapsLock key, that's why I chose it. 
 ; 
 CapsLock:: 
+    GoSub, HotkeyAction
+return
 
+^!c::
+    GoSub, HotkeyAction
+return
+
+HotkeyAction:
 search = 
 numallwin = 0 
 GuiControl,, Edit1 
