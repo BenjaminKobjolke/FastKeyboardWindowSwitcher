@@ -51,4 +51,4 @@ So if you type "wa" it will search for winamp.
 
 Rename shortcuts_example.txt to shortcutslist.txt and add the windows you do not want to show up to that list.
 One shortcut per line
-; example: wa|winamp
+Example: wa|winamp

@@ -120,6 +120,7 @@ FileRead, filterlist, filterlist.txt
 ; example: tb|thunderbird
 FileRead, shortcutslist, shortcutslist.txt
 
+
 ; Set this yes to update the list of windows every time the contents of the 
 ; listbox is updated. This is usually not necessary and it is an overhead which 
 ; slows down the update of the listbox, so this feature is disabled by default. 
