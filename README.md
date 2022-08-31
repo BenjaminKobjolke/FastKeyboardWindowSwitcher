@@ -37,14 +37,14 @@ _The idea comes from Emacs where it is used to switch between opened files. Afte
 
 Mouse will be moved to the center of the selected window
 
-## Filter list
+### Filter list
 
 Array of filters for filtering out titles from the window list.
 
 Rename filterlist_example.txt to filterlist.txt and add the windows you do not want to show up to that list.
 Seperate titles with a "|".
 
-## Shortcuts list
+### Shortcuts list
 
 List of shortcuts for window titles.
 So if you type "wa" it will search for winamp.
