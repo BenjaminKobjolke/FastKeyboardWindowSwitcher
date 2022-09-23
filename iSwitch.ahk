@@ -59,7 +59,7 @@ SetTitleMatchMode, 2
 
 ; set this to yes if you want to select the only matching window 
 ; automatically 
-IniRead, autoactivateifonlyone, iSwitch.ini, settings, autoactivateifonlyone , 
+IniRead, autoactivateifonlyone, settings.ini, settings, autoactivateifonlyone , 
 
 ; set this to yes if you want to enable tab completion (see above) 
 ; it has no effect if firstlettermatch (see below) is enabled 
@@ -631,8 +631,12 @@ RefreshWindowList:
     if numwin = 1 
         if autoactivateifonlyone = 1
         { 
+            while(A_TimeIdle < 100) 
+            {                
+                Sleep, 100
+            }            
             GoSub, ActivateWindow 
-            Gosub, CleanExit 
+            Gosub, CleanExit             
         } 
 
     GoSub ActivateWindowInBackgroundIfEnabled 
@@ -709,6 +713,13 @@ RefreshWindowList:
 
 return 
 
+WaitForUserToEndTyping:
+    if(A_TimeIdle > 100) {
+        SetTimer, WaitForUserToEndTyping, Off
+        GoSub, ActivateWindow 
+        Gosub, CleanExit     
+    }
+return
 ;---------------------------------------------------------------------- 
 ; 
 ; Delete last search char and update the window list 
