@@ -59,15 +59,15 @@ SetTitleMatchMode, 2
 
 ; set this to yes if you want to select the only matching window 
 ; automatically 
-autoactivateifonlyone = 
+IniRead, autoactivateifonlyone, iSwitch.ini, settings, autoactivateifonlyone , 
 
 ; set this to yes if you want to enable tab completion (see above) 
 ; it has no effect if firstlettermatch (see below) is enabled 
-tabcompletion = 
+tabcompletion = yes
 
 ; set this to yes to enable digit shortcuts when there are ten or 
 ; less items in the list 
-digitshortcuts = 
+digitshortcuts = yes
 
 ; set this to yes to enable first letter match mode where the typed 
 ; search string must match the first letter of words in the 
@@ -330,11 +330,11 @@ Loop
             continue 
         else 	
             input = %completion% 
-
+    
     ; pass these keys to the selector window 
 
     if ErrorLevel = EndKey:up 
-    { 
+    {         
         Send, {up} 
         GoSuB ActivateWindowInBackgroundIfEnabled 
         continue 
@@ -385,7 +385,7 @@ Loop
             if input in 1,2,3,4,5,6,7,8,9,0 
             { 
                 if input = 0 
-                    input = 10 
+                    input = 10  
 
                 if numwin < %input% 
                 { 
@@ -629,7 +629,7 @@ RefreshWindowList:
     GuiControl, Choose, ListBox1, 1 
 
     if numwin = 1 
-        if autoactivateifonlyone <> 
+        if autoactivateifonlyone = 1
         { 
             GoSub, ActivateWindow 
             Gosub, CleanExit 
