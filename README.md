@@ -12,7 +12,45 @@ Use caps-lock to show the window.
 
 When the window is open, just type a few letters matching the desired window's title.
 
-## Config
+## settings.ini
+
+Rename settings_example.ini to settings.ini.
+Then you have adjust the following settings within that file.
+
+### [settings]
+
+#### autoactivateifonlyone
+`autoactivateifonlyone=1`
+If you type and there is only one matching window then that window will be automatically be activated. No need to press enter.
+
+### [gui]
+
+#### spacing
+`spacingHorizontal=10`
+The spacing of the iSwitch window from the left your screen in percent.
+10 means the window will start 10% from the left the active screen and will also keep the same distance from the right side.
+
+`spacingVertical=10`
+The spacing of the iSwitch window from the top your screen in percent.
+10 means the window will start 10% from the top the active screen and will also keep the same distance from the bottom side.
+
+#### font
+`fontColor=33C4FF`
+Text color in hex values or string names like "blue", "yellow", "green"...
+Default is 33C4FF.
+
+`fontSize=20`
+Font size.
+Default is 20.
+
+#### general
+`transparency=180`
+Window transparency.
+Default is 180.
+Values between 0 and 255 to indicate the degree of transparency. 0 makes the window invisible while 255 makes it opaque.
+
+
+## Special configuration files
 
 If you want to ignore some windows
 reanme filterlist_example.txt to filterlist.txt and add the windows' titles that you dont want like this "firefox|chrome|winamp"

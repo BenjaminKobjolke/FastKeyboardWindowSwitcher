@@ -63,6 +63,10 @@ DEFAULT_GUI_SPACING_HORIZONTAL := 20
 DEFAULT_GUI_SPACING_VERTICAL := 20
 IniRead, guiSpacingHorizontal, settings.ini, gui, spacingHorizontal , %DEFAULT_GUI_SPACING_HORIZONTAL%
 IniRead, guiSpacingVertical, settings.ini, gui, spacingVertical , %DEFAULT_GUI_SPACING_VERTICAL%
+IniRead, guiTextColor, settings.ini, gui, textColor , yellow
+IniRead, guiTextSize, settings.ini, gui, textSize , 15
+IniRead, guiTransparency, settings.ini, gui, transparency , 180
+
 
 ; set this to yes if you want to select the only matching window 
 ; automatically 
@@ -177,12 +181,11 @@ AutoTrim, off
 
 Gui, +LastFound +AlwaysOnTop -Caption   
 Gui, Color, black,black
-WinSet, Transparent, 180
-Gui,Font,s15 cYellow bold,Calibri
+WinSet, Transparent, %guiTransparency%
+Gui,Font,s%guiTextSize% c%guiTextColor% bold,Calibri
 
 ;WS_EX_CLIENTEDGE = E0x200 removes the border
-Gui, Add, ListBox, vindex gListBoxClick x-2 y-2 -E0x200 AltSubmit -VScroll
-;GuiControl,Move,index,w501
+Gui, Add, ListBox, vindex gListBoxClick x2 y2 -E0x200 AltSubmit -VScroll
 if filterlist <> 
 { 
     loop, parse, filterlist, | 
@@ -265,7 +268,9 @@ width := dimensions[3]
 height := dimensions[4]
 ;M sgbox, % "x" x " y" y " w" width " h" height 
 Gui, Show, % "x" x " y" y " w" width " h" height iSwitch 
-GuiControl,Move,index, % "w" width  " h" width 
+listWidth := width - 10
+listHeight := height - 2
+GuiControl,Move,index, % "w" listWidth  " h" listHeight 
 ; If we determine the ID of the switcher window here then 
 ; why doesn't it appear in the window list when the script is 
 ; run the first time? (Note that RefreshWindowList has already 
