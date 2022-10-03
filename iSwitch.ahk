@@ -2,7 +2,7 @@
 ;@Ahk2Exe-ExeName %A_ScriptDir%\bin\iswitch.exe
 
 ;https://autohotkey.com/board/topic/30487-iswitchw-cosmetically-enhanced-edition/page-3
-#Include, libraries/guitools.ahk
+#Include, autohotkey_libraries/guitools.ahk
 
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
