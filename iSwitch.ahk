@@ -63,8 +63,8 @@ DEFAULT_GUI_SPACING_HORIZONTAL := 20
 DEFAULT_GUI_SPACING_VERTICAL := 20
 IniRead, guiSpacingHorizontal, settings.ini, gui, spacingHorizontal , %DEFAULT_GUI_SPACING_HORIZONTAL%
 IniRead, guiSpacingVertical, settings.ini, gui, spacingVertical , %DEFAULT_GUI_SPACING_VERTICAL%
-IniRead, guiTextColor, settings.ini, gui, textColor , yellow
-IniRead, guiTextSize, settings.ini, gui, textSize , 15
+IniRead, guiTextColor, settings.ini, gui, textColor , 33C4FF
+IniRead, guiTextSize, settings.ini, gui, textSize , 20
 IniRead, guiTransparency, settings.ini, gui, transparency , 180
 
 
