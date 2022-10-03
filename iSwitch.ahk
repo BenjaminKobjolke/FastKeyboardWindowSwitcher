@@ -2,6 +2,8 @@
 ;@Ahk2Exe-ExeName %A_ScriptDir%\bin\iswitch.exe
 
 ;https://autohotkey.com/board/topic/30487-iswitchw-cosmetically-enhanced-edition/page-3
+#Include, libraries/guitools.ahk
+
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 #SingleInstance force
@@ -56,6 +58,11 @@ SetTitleMatchMode, 2
 ; 
 ; User configuration 
 ; 
+
+DEFAULT_GUI_SPACING_HORIZONTAL := 20
+DEFAULT_GUI_SPACING_VERTICAL := 20
+IniRead, guiSpacingHorizontal, settings.ini, gui, spacingHorizontal , %DEFAULT_GUI_SPACING_HORIZONTAL%
+IniRead, guiSpacingVertical, settings.ini, gui, spacingVertical , %DEFAULT_GUI_SPACING_VERTICAL%
 
 ; set this to yes if you want to select the only matching window 
 ; automatically 
@@ -168,15 +175,14 @@ if (!a_iscompiled) {
 
 AutoTrim, off 
 
-;this section modified by ezuk, 03 July 2008
 Gui, +LastFound +AlwaysOnTop -Caption   
 Gui, Color, black,black
 WinSet, Transparent, 180
 Gui,Font,s15 cYellow bold,Calibri
-Gui, Add, ListBox, vindex gListBoxClick x-2 y-2 w810 h602 AltSubmit -VScroll
-;end of modifications by ezuk
 
-
+;WS_EX_CLIENTEDGE = E0x200 removes the border
+Gui, Add, ListBox, vindex gListBoxClick x-2 y-2 -E0x200 AltSubmit -VScroll
+;GuiControl,Move,index,w501
 if filterlist <> 
 { 
     loop, parse, filterlist, | 
@@ -195,10 +201,10 @@ if shortcutslist <>
         ;d := [] 
         ;shortcuts%a_index% = %A_LoopField% 
         
-        ;MsgBox, %A_LoopField% 
+        ;M sgBox, %A_LoopField% 
         StringSplit, cArray, A_LoopField, | 
         val = %cArray2%
-        ;MsgBox, %val%
+        ;M sgBox, %val%
         ; string split pipe
         val = %cArray1%
         shortcuts[index, 0] := val
@@ -206,7 +212,7 @@ if shortcutslist <>
         val = %cArray2%
         shortcuts[index, 1] := val
         ;d.Push(2)
-        ;MsgBox, %d%
+        ;M sgBox, %d%
         ;c.Push(d)
         index := index + 1 
        
@@ -220,7 +226,7 @@ if shortcutslist <>
 
 
 
-;MsgBox, % shortcuts[1][1] 
+;M sgBox, % shortcuts[1][1] 
 ;---------------------------------------------------------------------- 
 ; 
 ; I never use the CapsLock key, that's why I chose it. 
@@ -242,46 +248,24 @@ GuiControl,, Edit1
 GoSub, RefreshWindowList 
 
 WinGet, orig_active_id, ID, A 
-prev_active_id = %orig_active_id% 
+prev_active_id = %orig_active_id%
 
-
-;---------GET CENTER OF CURRENT MONITOR---------
-	;get current monitor index
-	CurrentMonitorIndex:=GetCurrentMonitorIndex()	
-	;get Hwnd of current GUI
-	DetectHiddenWindows On
-	Gui, +LastFound
-	Gui, Show, Hide
-	GUI_Hwnd := WinExist()
-	;Calculate size of GUI
-	GetClientSize(GUI_Hwnd,GUI_Width,GUI_Height)
-	DetectHiddenWindows Off
-	;Calculate where the GUI should be positioned
-	GUI_X:=CoordXCenterScreen(GUI_Width,CurrentMonitorIndex)
-	GUI_Y:=CoordYCenterScreen(GUI_Height,CurrentMonitorIndex)
-	
-	
-;------- / GET CENTER OF CURRENT MONITOR--------- 
-;SHOW GUI AT CENTER OF CURRENT SCREEN
-;Gui, Show, % "x" GUI_X " y" GUI_Y h600 w800, Window Switcher 
-
-MouseGetPos, GUI_X, GUI_Y	
-;WinGetActiveStats, Title, Width, Height, GUI_X, GUI_Y
-;TrayTip, Index, %CurrentMonitorIndex% %GUI_X% %GUI_Y% %GUI_Width
-SysGet, MonitorWorkArea, MonitorWorkArea, %CurrentMonitorIndex%
-
-GUI_Width := MonitorWorkAreaRight
-GUI_Height := MonitorWorkAreaBottom
-
-
-if(GUI_X + 800 > GUI_Width) {
-	GUI_X := GUI_Width - 900	
+dimensions := CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical)
+if(dimensions[3] <= 0 && dimensions[4] <= 0) {
+    dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, DEFAULT_GUI_SPACING_VERTICAL)
+} else if(dimensions[3] <= 0 ) {
+    dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, guiSpacingVertical)
+} else if(dimensions[4] <= 0 ) {
+    dimensions := CalculateWindowDimensions(guiSpacingHorizontal, DEFAULT_GUI_SPACING_VERTICAL)
 }
-if(GUI_Y + 600 > GUI_Height) {
-	;TrayTip, WTF, %GUI_Y% %GUI_Height%
-	GUI_Y := GUI_Height - 700	
-}
-Gui, Show, % "x" GUI_X " y" GUI_Y h600 w800, Window Switcher 
+
+x := dimensions[1]
+y := dimensions[2]
+width := dimensions[3]
+height := dimensions[4]
+;M sgbox, % "x" x " y" y " w" width " h" height 
+Gui, Show, % "x" x " y" y " w" width " h" height iSwitch 
+GuiControl,Move,index, % "w" width  " h" width 
 ; If we determine the ID of the switcher window here then 
 ; why doesn't it appear in the window list when the script is 
 ; run the first time? (Note that RefreshWindowList has already 
@@ -289,7 +273,7 @@ Gui, Show, % "x" GUI_X " y" GUI_Y h600 w800, Window Switcher
 ; Answer: Because when this code runs first the switcher window 	
 ; does not exist yet when RefreshWindowList is called. 
 WinGet, switcher_id, ID, A 
-WinSet, AlwaysOnTop, On, ahk_id %switcher_id% 
+;WinSet, AlwaysOnTop, On, ahk_id %switcher_id% 
 
 Loop 
 { 
@@ -895,20 +879,6 @@ ifwinnotactive, ahk_id %switcher_id%
 
 return
 
-GetCurrentMonitorIndex(){
-	CoordMode, Mouse, Screen
-	MouseGetPos, mx, my
-	SysGet, monitorsCount, 80
-
-	Loop %monitorsCount%{
-		SysGet, monitor, Monitor, %A_Index%
-		if (monitorLeft <= mx && mx <= monitorRight && monitorTop <= my && my <= monitorBottom){
-			Return A_Index
-			}
-		}
-		Return 1
-}
-
 CoordXCenterScreen(WidthOfGUI,ScreenNumber)
 {
 SysGet, Mon1, Monitor, %ScreenNumber%
@@ -927,4 +897,22 @@ GetClientSize(hwnd, ByRef w, ByRef h)
     DllCall("GetClientRect", "uint", hwnd, "uint", &rc)
     w := NumGet(rc, 8, "int")
     h := NumGet(rc, 12, "int")
+}
+
+CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
+    
+    CurrentMonitorIndex := GetCurrentMonitorIndex()	
+    SysGet, MonitorWorkArea, MonitorWorkArea, %CurrentMonitorIndex%
+
+    spacingHorizontalPx := MonitorWorkAreaRight * (guiSpacingHorizontal / 100)
+    width := MonitorWorkAreaRight - (spacingHorizontalPx * 2) 
+
+    spacingVerticalPx := MonitorWorkAreaBottom * (guiSpacingVertical / 100)
+    height := MonitorWorkAreaBottom - (spacingVerticalPx * 2)
+
+    x := spacingHorizontalPx
+    y := spacingVerticalPx
+
+    array := [x, y, width, height]
+    return array
 }
