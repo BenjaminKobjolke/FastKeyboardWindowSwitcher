@@ -245,6 +245,7 @@ return
 */
 
 HotkeyAction:
+
 search = 
 numallwin = 0 
 GuiControl,, Edit1 
@@ -908,15 +909,18 @@ CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
     
     CurrentMonitorIndex := GetCurrentMonitorIndex()	
     SysGet, MonitorWorkArea, MonitorWorkArea, %CurrentMonitorIndex%
+    
+    monitorWidth := MonitorWorkAreaRight - MonitorWorkAreaLeft
+    monitorHeight := MonitorWorkAreaBottom - MonitorWorkAreaTop
+   
+    spacingHorizontalPx := monitorWidth * (guiSpacingHorizontal / 100)
+    width := monitorWidth - (spacingHorizontalPx * 2) 
 
-    spacingHorizontalPx := MonitorWorkAreaRight * (guiSpacingHorizontal / 100)
-    width := MonitorWorkAreaRight - (spacingHorizontalPx * 2) 
-
-    spacingVerticalPx := MonitorWorkAreaBottom * (guiSpacingVertical / 100)
-    height := MonitorWorkAreaBottom - (spacingVerticalPx * 2)
-
-    x := spacingHorizontalPx
-    y := spacingVerticalPx
+    spacingVerticalPx := monitorHeight * (guiSpacingVertical / 100)
+    height := monitorHeight - (spacingVerticalPx * 2)
+    
+    x := MonitorWorkAreaLeft + spacingHorizontalPx
+    y := MonitorWorkAreaTop + spacingVerticalPx
 
     array := [x, y, width, height]
     return array
