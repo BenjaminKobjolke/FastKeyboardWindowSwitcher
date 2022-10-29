@@ -18,7 +18,6 @@ if (command == "exit")
 {
 	ExitApp
 }
-
 ; 
 ; iswitchw - Incrementally switch between windows using substrings
 ;
@@ -244,185 +243,210 @@ if shortcutslist <>
 ; 
 ; I never use the CapsLock key, that's why I chose it. 
 ; 
+
+windowIsOpen := 0
 CapsLock:: 
+    SetTimer, CheckHotkey, Off
+    SetTimer, StartHotkeyChecking, 300
     GoSub, HotkeyAction
+    SetTimer, StartHotkeyChecking, Off
+    SetTimer, CheckHotkey, Off
 return
 
+StartHotkeyChecking:
+    SetTimer, StartHotkeyChecking, Off
+    SetTimer, CheckHotkey, 10
+return
+
+CheckHotkey:
+    FormatTime, Time
+    keystate := GetKeyState("CapsLock", "P")
+    ;T oolTip, %Time% >%keystate%<
+    if(keystate = "1") {
+        SetTimer, CheckHotkey, Off
+        send, {esc} 
+        GoSub, CloseGui
+    }
+return
 /*
 ^!c::
     GoSub, HotkeyAction
 return
 */
 
+CloseGui:
+    Gui, cancel 
+
+    ; restore the originally active window if 
+    ; activateselectioninbg is enabled 
+    if activateselectioninbg <> 
+        WinActivate, ahk_id %orig_active_id% 
+
+return
+
 HotkeyAction:
 
-search = 
-numallwin = 0 
-GuiControl,, Edit1 
-GoSub, RefreshWindowList 
+    search = 
+    numallwin = 0 
+    GuiControl,, Edit1 
+    GoSub, RefreshWindowList 
 
-WinGet, orig_active_id, ID, A 
-prev_active_id = %orig_active_id%
+    WinGet, orig_active_id, ID, A 
+    prev_active_id = %orig_active_id%
 
-dimensions := CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical)
-if(dimensions[3] <= 0 && dimensions[4] <= 0) {
-    dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, DEFAULT_GUI_SPACING_VERTICAL)
-} else if(dimensions[3] <= 0 ) {
-    dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, guiSpacingVertical)
-} else if(dimensions[4] <= 0 ) {
-    dimensions := CalculateWindowDimensions(guiSpacingHorizontal, DEFAULT_GUI_SPACING_VERTICAL)
-}
+    dimensions := CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical)
+    if(dimensions[3] <= 0 && dimensions[4] <= 0) {
+        dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, DEFAULT_GUI_SPACING_VERTICAL)
+    } else if(dimensions[3] <= 0 ) {
+        dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, guiSpacingVertical)
+    } else if(dimensions[4] <= 0 ) {
+        dimensions := CalculateWindowDimensions(guiSpacingHorizontal, DEFAULT_GUI_SPACING_VERTICAL)
+    }
 
-x := dimensions[1]
-y := dimensions[2]
-width := dimensions[3]
-height := dimensions[4]
-;M sgbox, % "x" x " y" y " w" width " h" height 
-Gui, Show, % "x" x " y" y " w" width " h" height iSwitch 
-listWidth := width - 10
-listHeight := height - 2
-GuiControl,Move,index, % "w" listWidth  " h" listHeight 
-; If we determine the ID of the switcher window here then 
-; why doesn't it appear in the window list when the script is 
-; run the first time? (Note that RefreshWindowList has already 
-; been called above). 
-; Answer: Because when this code runs first the switcher window 	
-; does not exist yet when RefreshWindowList is called. 
-WinGet, switcher_id, ID, A 
-;WinSet, AlwaysOnTop, On, ahk_id %switcher_id% 
+    x := dimensions[1]
+    y := dimensions[2]
+    width := dimensions[3]
+    height := dimensions[4]
+    ;M sgbox, % "x" x " y" y " w" width " h" height 
+    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch 
+    listWidth := width - 10
+    listHeight := height - 2
+    GuiControl,Move,index, % "w" listWidth  " h" listHeight 
+    ; If we determine the ID of the switcher window here then 
+    ; why doesn't it appear in the window list when the script is 
+    ; run the first time? (Note that RefreshWindowList has already 
+    ; been called above). 
+    ; Answer: Because when this code runs first the switcher window 	
+    ; does not exist yet when RefreshWindowList is called. 
+    WinGet, switcher_id, ID, A 
+    ;WinSet, AlwaysOnTop, On, ahk_id %switcher_id% 
 
-Loop 
-{ 
-    if closeifinactivated <> 
-        settimer, CloseIfInactive, 200 
-
-    Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
-
-    if closeifinactivated <> 
-        settimer, CloseIfInactive, off 
-
-    if ErrorLevel = EndKey:enter 
+    Loop 
     { 
-        GoSub, ActivateWindow 
-        break 
-    } 
+        if closeifinactivated <> 
+            settimer, CloseIfInactive, 200 
 
-    if ErrorLevel = EndKey:escape 
-    { 
-        Gui, cancel 
+        Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
 
-        ; restore the originally active window if 
-        ; activateselectioninbg is enabled 
-        if activateselectioninbg <> 
-            WinActivate, ahk_id %orig_active_id% 
+        if closeifinactivated <> 
+            settimer, CloseIfInactive, off 
 
-        break 
-    } 
+        if ErrorLevel = EndKey:enter 
+        { 
+            GoSub, ActivateWindow 
+            break 
+        } 
 
-    if ErrorLevel = EndKey:backspace 
-    { 
-        GoSub, DeleteSearchChar 
-        continue 
-    } 
+        if ErrorLevel = EndKey:escape 
+        { 
+            GoSub, CloseGui 
+            break
+        } 
 
-    if ErrorLevel = EndKey:tab 
-        if completion = 
+        if ErrorLevel = EndKey:backspace 
+        { 
+            GoSub, DeleteSearchChar 
             continue 
-        else 	
-            input = %completion% 
-    
-    ; pass these keys to the selector window 
+        } 
 
-    if ErrorLevel = EndKey:up 
-    {         
-        Send, {up} 
-        GoSuB ActivateWindowInBackgroundIfEnabled 
-        continue 
-    } 
+        if ErrorLevel = EndKey:tab 
+            if completion = 
+                continue 
+            else 	
+                input = %completion% 
+        
+        ; pass these keys to the selector window 
 
-    if ErrorLevel = EndKey:down 
-    { 
-        Send, {down} 
-        GoSuB ActivateWindowInBackgroundIfEnabled 
-        continue 
-    } 
+        if ErrorLevel = EndKey:up 
+        {         
+            Send, {up} 
+            GoSuB ActivateWindowInBackgroundIfEnabled 
+            continue 
+        } 
 
-    if ErrorLevel = EndKey:pgup 
-    { 
-        Send, {pgup} 
+        if ErrorLevel = EndKey:down 
+        { 
+            Send, {down} 
+            GoSuB ActivateWindowInBackgroundIfEnabled 
+            continue 
+        } 
 
-        GoSuB ActivateWindowInBackgroundIfEnabled 
-        continue 
-    } 
+        if ErrorLevel = EndKey:pgup 
+        { 
+            Send, {pgup} 
 
-    if ErrorLevel = EndKey:pgdn 
-    { 
-        Send, {pgdn} 
-        GoSuB ActivateWindowInBackgroundIfEnabled 
-        continue 
-    } 
+            GoSuB ActivateWindowInBackgroundIfEnabled 
+            continue 
+        } 
 
-    if ErrorLevel = EndKey:left 
-    { 
-        direction = -1 
-        GoSuB MoveSwitcher 
-        continue 
-    } 
+        if ErrorLevel = EndKey:pgdn 
+        { 
+            Send, {pgdn} 
+            GoSuB ActivateWindowInBackgroundIfEnabled 
+            continue 
+        } 
 
-    if ErrorLevel = EndKey:right 
-    { 
-        direction = 1 
-        GoSuB MoveSwitcher 
-        continue 
-    } 
+        if ErrorLevel = EndKey:left 
+        { 
+            direction = -1 
+            GoSuB MoveSwitcher 
+            continue 
+        } 
 
-    ; FIXME: probably other error level cases 
-    ; should be handled here (interruption?) 
+        if ErrorLevel = EndKey:right 
+        { 
+            direction = 1 
+            GoSuB MoveSwitcher 
+            continue 
+        } 
 
-    ; invoke digit shortcuts if applicable 
-    if digitshortcuts <> 
-        if numwin <= 10 
-            if input in 1,2,3,4,5,6,7,8,9,0 
-            { 
-                if input = 0 
-                    input = 10  
+        ; FIXME: probably other error level cases 
+        ; should be handled here (interruption?) 
 
-                if numwin < %input% 
+        ; invoke digit shortcuts if applicable 
+        if digitshortcuts <> 
+            if numwin <= 10 
+                if input in 1,2,3,4,5,6,7,8,9,0 
                 { 
-                    if nomatchsound <> 
-                        SoundPlay, %nomatchsound% 
-                    continue 
+                    if input = 0 
+                        input = 10  
+
+                    if numwin < %input% 
+                    { 
+                        if nomatchsound <> 
+                            SoundPlay, %nomatchsound% 
+                        continue 
+                    } 
+
+                    GuiControl, choose, ListBox1, %input% 
+                    GoSub, ActivateWindow 
+                    break 
                 } 
 
-                GuiControl, choose, ListBox1, %input% 
-                GoSub, ActivateWindow 
-                break 
-            } 
+        ; process typed character 
 
-    ; process typed character 
-
-    search = %search%%input% 
-    ; check if the search matches a shortcut
-    ; iterate shortcuts
-    index = 0
-    Loop, %amountOfShortcuts%
-    {
-        cVal := % shortcuts[index, 0]        
-        ;M sgBox, %search% %cVal%
-        if(search = cVal)
+        search = %search%%input% 
+        ; check if the search matches a shortcut
+        ; iterate shortcuts
+        index = 0
+        Loop, %amountOfShortcuts%
         {
-            search = % shortcuts[index, 1]
-            break
+            cVal := % shortcuts[index, 0]        
+            ;M sgBox, %search% %cVal%
+            if(search = cVal)
+            {
+                search = % shortcuts[index, 1]
+                break
+            }    
+            index := index + 1
         }    
-        index := index + 1
-    }    
 
-    ;ToolTip, %search%
-    GuiControl,, Edit1, %search% 
-    GoSub, RefreshWindowList 
-} 
+        ;ToolTip, %search%
+        GuiControl,, Edit1, %search% 
+        GoSub, RefreshWindowList 
+    } 
 
-Gosub, CleanExit 
+    Gosub, CleanExit 
 
 return 
 
