@@ -2,12 +2,15 @@
 ;@Ahk2Exe-ExeName %A_ScriptDir%\bin\iswitch.exe
 
 ;https://autohotkey.com/board/topic/30487-iswitchw-cosmetically-enhanced-edition/page-3
-#Include, autohotkey_libraries/guitools.ahk
 
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 #SingleInstance force
 SetTitleMatchMode, 2
+SetWorkingDir %A_ScriptDir%
+
+#Include, %A_ScriptDir%/autohotkey_libraries/guitools.ahk
+
 
 ; close script from another script by sending exit as argument
 command := A_Args[1]
