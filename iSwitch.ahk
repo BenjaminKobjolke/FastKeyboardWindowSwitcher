@@ -9,6 +9,13 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 #SingleInstance force
 SetTitleMatchMode, 2
 
+; close script from another script by sending exit as argument
+command := A_Args[1]
+if (command == "exit") 
+{
+	ExitApp
+}
+
 ; 
 ; iswitchw - Incrementally switch between windows using substrings
 ;
