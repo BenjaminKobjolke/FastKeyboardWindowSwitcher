@@ -1,3 +1,9 @@
 [submodule "autohotkey_libraries"]
 	path = autohotkey_libraries
 	url = https://github.com/BenjaminKobjolke/autohotkey_libraries
+[submodule "github_modules/Class_LV_Colors"]
+	path = github_modules/Class_LV_Colors
+	url = https://github.com/AHK-just-me/Class_LV_Colors.git
+[submodule "github_modules/VD.ahk"]
+	path = github_modules/VD.ahk
+	url = https://github.com/FuPeiJiang/VD.ahk.git
