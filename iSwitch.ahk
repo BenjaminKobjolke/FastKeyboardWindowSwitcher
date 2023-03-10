@@ -984,8 +984,7 @@ return
 #If
 
 #If guiActive = 1 and usedeltoendtask = 1
-    DEL::
-        ToolTip, %guiActive% "wtf"
+    DEL::        
         winid := sortedElementsArray[selectedIndex][2]        
         WinClose, ahk_id %winid% 
         LV_Delete(selectedIndex)        
@@ -1017,6 +1016,12 @@ UpdateStatusBar:
     } else {
         newText = %newText% | Virtual Desktops disabled
     }
+
+    if(usedeltoendtask = 1) {
+        newText = %newText% | End tasks with DEL enabled
+    } else {
+        newText = %newText% | End tasks with DEL disabled
+    }    
     SB_SetText(newText, 1)
 return
 
