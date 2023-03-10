@@ -317,6 +317,12 @@ SetupGui:
     Gui, +LastFound +AlwaysOnTop -Caption   
     Gui, Color, black,black
     WinSet, Transparent, %guiTransparency%
+    
+    Gui,Font,s14 c%guiTextColor% bold,Calibri
+    Gui, Add, StatusBar,  vMyStatusBar  -Theme BackgroundSilver
+    GoSub, UpdateStatusBar
+    
+
     Gui,Font,s%guiTextSize% c%guiTextColor% bold,Calibri
 
     ;WS_EX_CLIENTEDGE = E0x200 removes the border
@@ -335,7 +341,6 @@ SetupGui:
 
     CLV := New LV_Colors(HLV)
 
-    
 return
 
 
@@ -401,8 +406,9 @@ HotkeyAction:
 
     ;M sgbox, % "x" x " y" y " w" width " h" height 
     
+    statusBarHeight := 50
     listWidth := width - 10
-    listHeight := height - 10
+    listHeight := height - 10 - statusBarHeight
     
     column1Width := listWidth - desktopColumnWidth
 
@@ -944,51 +950,75 @@ DeleteSearchChar:
 
 return 
 
-#If guiActive = 1 
+#If guiActive = 1 and useVirtualDesktops = 1
+    F1::  
+        winid := sortedElementsArray[selectedIndex][2]        
+        VD.MoveWindowToDesktopNum("ahk_id" winid,1)          
+        title := sortedElementsArray[selectedIndex][1]        
+        LV_Modify(selectedIndex,, title, 1)
+    return
+    F2::  
+        winid := sortedElementsArray[selectedIndex][2]        
+        VD.MoveWindowToDesktopNum("ahk_id" winid,2)          
+        title := sortedElementsArray[selectedIndex][1]        
+        LV_Modify(selectedIndex,, title, 2)
+    return
+    F3::  
+        winid := sortedElementsArray[selectedIndex][2]        
+        VD.MoveWindowToDesktopNum("ahk_id" winid,3)          
+        title := sortedElementsArray[selectedIndex][1]        
+        LV_Modify(selectedIndex,, title, 3)
+    return    
+    F10::
+        winid := sortedElementsArray[selectedIndex][2]     
+        VD.TogglePinWindow("ahk_id" winid)  
+        title := sortedElementsArray[selectedIndex][1]        
+        desktopNum := VD.getDesktopNumOfWindow("ahk_id" winid)      
+        desktopText := desktopNum     
+        if(desktopNum = 0) 
+        {
+        desktopText = pinned
+        }
+        LV_Modify(selectedIndex,, title, desktopText)        
+    return
+#If
 
-    #If useVirtualDesktops = 1
-        F1::  
-            winid := sortedElementsArray[selectedIndex][2]        
-            VD.MoveWindowToDesktopNum("ahk_id" winid,1)          
-            title := sortedElementsArray[selectedIndex][1]        
-            LV_Modify(selectedIndex,, title, 1)
-        return
-        F2::  
-            winid := sortedElementsArray[selectedIndex][2]        
-            VD.MoveWindowToDesktopNum("ahk_id" winid,2)          
-            title := sortedElementsArray[selectedIndex][1]        
-            LV_Modify(selectedIndex,, title, 2)
-        return
-        F3::  
-            winid := sortedElementsArray[selectedIndex][2]        
-            VD.MoveWindowToDesktopNum("ahk_id" winid,3)          
-            title := sortedElementsArray[selectedIndex][1]        
-            LV_Modify(selectedIndex,, title, 3)
-        return    
-        F10::
-            winid := sortedElementsArray[selectedIndex][2]     
-            VD.TogglePinWindow("ahk_id" winid)  
-            title := sortedElementsArray[selectedIndex][1]        
-            desktopNum := VD.getDesktopNumOfWindow("ahk_id" winid)      
-            desktopText := desktopNum     
-            if(desktopNum = 0) 
-            {
-            desktopText = pinned
-            }
-            LV_Modify(selectedIndex,, title, desktopText)        
-        return
+#If guiActive = 1 and usedeltoendtask = 1
+    DEL::
+        ToolTip, %guiActive% "wtf"
+        winid := sortedElementsArray[selectedIndex][2]        
+        WinClose, ahk_id %winid% 
+        LV_Delete(selectedIndex)        
+    return
 #If
 
 #If guiActive = 1
-
-    #If usedeltoendtask = 1
-        DEL::
-            winid := sortedElementsArray[selectedIndex][2]        
-            WinClose, ahk_id %winid% 
-            LV_Delete(selectedIndex)        
-        return
-    #If
+    F9::
+  
+        if(autoactivateifonlyone = 1) {
+            autoactivateifonlyone = 0            
+        } else {
+            autoactivateifonlyone = 1            
+        }
+        GoSub UpdateStatusBar
+    return
 #If
+
+UpdateStatusBar:   
+    newText = 
+    if(autoactivateifonlyone = 1) {
+        newText = Auto activate enabled
+    } else {
+        newText = Auto activate disabled
+    }   
+    
+    if(useVirtualDesktops = 1) {
+        newText = %newText% | Virtual Desktops enabled
+    } else {
+        newText = %newText% | Virtual Desktops disabled
+    }
+    SB_SetText(newText, 1)
+return
 
 ;---------------------------------------------------------------------- 
 ; 
