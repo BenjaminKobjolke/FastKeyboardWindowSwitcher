@@ -85,8 +85,11 @@ IniRead, guiTransparency, settings.ini, gui, transparency , 180
 ; set this to yes if you want to select the only matching window 
 ; automatically 
 IniRead, autoactivateifonlyone, settings.ini, settings, autoactivateifonlyone , 1
+IniRead, usedeltoendtask, settings.ini, settings, usedeltoendtask , 0
 IniRead, useVirtualDesktops, settings.ini, virtualdesktops, enable , 
 
+sortedElementsArray := Array()
+guiActive := 0
 ; set this to yes if you want to enable tab completion (see above) 
 ; it has no effect if firstlettermatch (see below) is enabled 
 tabcompletion = yes
@@ -131,6 +134,7 @@ selectedIndex := 1
 
 if useVirtualDesktops = 1
 {
+
     DetectHiddenWindows On
     #Include, %A_ScriptDir%/github_modules/VD.ahk/_VD.ahk
     dummyFunction1() {
@@ -166,6 +170,10 @@ FileRead, shortcutslist, shortcutslist.txt
 ; listbox is updated. This is usually not necessary and it is an overhead which 
 ; slows down the update of the listbox, so this feature is disabled by default. 
 dynamicwindowlist = 
+if useVirtualDesktops = 1
+{
+    dynamicwindowlist = yes
+}
 
 ; path to sound file played when the user types a substring which 
 ; does not match any of the windows 
@@ -265,6 +273,7 @@ GoSub, SetupGui
 
 return
 
+/*
 #If useVirtualDesktops = 1
     !F1::VD.goToDesktopNum(1)
     !F2::VD.goToDesktopNum(2)
@@ -273,6 +282,7 @@ return
 
     +F10::VD.TogglePinWindow("A")
 #If
+*/
 
 CapsLock:: 
     SetTimer, CheckHotkey, Off
@@ -324,8 +334,10 @@ SetupGui:
     }
 
     CLV := New LV_Colors(HLV)
+
     
 return
+
 
 
 MyListView:    
@@ -339,16 +351,13 @@ MyListView:
     {        
         selectedIndex :=  A_EventInfo    
     }
-    if (A_GuiEvent = "f") 
-    {        
-        selectedIndex :=  A_EventInfo      
-        ;T oolTip You double-clicked row number %A_EventInfo%
-    }    
+    
 return
 
 
 
 CloseGui:
+    guiActive := 0
     Gui, cancel 
 
     ; restore the originally active window if 
@@ -404,7 +413,9 @@ HotkeyAction:
     }    
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
-    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch     
+    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch  
+    guiActive := 1
+    
     WinSet, Redraw, , ahk_id %HLV%
     ;GuiControl,Move,index, % "w" listWidth  " h" listHeight 
     GuiControl,Move,indexListView, % "w" listWidth  " h" listHeight 
@@ -525,6 +536,7 @@ HotkeyAction:
         ; process typed character 
 
         search = %search%%input% 
+        
         ; check if the search matches a shortcut
         ; iterate shortcuts
         index = 0
@@ -558,7 +570,7 @@ return
 ; 
 RefreshWindowList: 
     ; refresh the list of windows if necessary 
-
+    
     if ( dynamicwindowlist = "yes" or numallwin = 0 ) 
     { 
         numallwin = 0 
@@ -728,17 +740,11 @@ RefreshWindowList:
             return 
         } 
 
-    ; sort the list alphabetically 
-    ;Sort, winlist, D| 
-
-    ; strip window IDs from the sorted list 
-    ;titlelist = 
+    ;ToolTip, %winlist%
     arrayindex = 1 
     
     LV_Delete()  
-    LV_ModifyCol(1, "NoSort")
-    LV_ModifyCol(2, "NoSort")
-
+    
     sortedElementsArray := Array()
     elementsArray := Array()
     idArray := Array()
@@ -754,27 +760,34 @@ RefreshWindowList:
     elementsArray := A.sortBy(elementsArray, 3)
 
     currentDesktop := VD.getCurrentDesktopNum()    
-    numItems := arrayindex -1
+    numItems := arrayindex -1    
     
-    Loop %numItems%
-    {
-        desktop := elementsArray[A_Index][3]
-        if(desktop != currentDesktop) 
+    if useVirtualDesktops = 1
+    { 
+        Loop %numItems%
         {
-            continue
+            desktop := elementsArray[A_Index][3]
+            if(desktop != currentDesktop) 
+            {
+                continue
+            }
+            sortedElementsArray.Push(elementsArray[A_Index])
         }
-        sortedElementsArray.Push(elementsArray[A_Index])
+        
+        Loop %numItems%
+        {
+            desktop := elementsArray[A_Index][3]
+            if(desktop = currentDesktop) 
+            {
+                continue
+            }
+            sortedElementsArray.Push(elementsArray[A_Index])
+        }
+    } else {
+        sortedElementsArray := elementsArray
     }
     
-    Loop %numItems%
-    {
-        desktop := elementsArray[A_Index][3]
-        if(desktop = currentDesktop) 
-        {
-            continue
-        }
-        sortedElementsArray.Push(elementsArray[A_Index])
-    }
+
 
     counter := 1
     Loop %numItems%
@@ -790,8 +803,12 @@ RefreshWindowList:
                 title = %counter% %title%
             }
         }   
+        desktopText := desktop
+        if(desktop = 0) {
+            desktopText = pinned
+        }
         ;MsgBox, %A_Index% %title% %desktop%
-        LV_Add("", title, desktop)  
+        LV_Add("", title, desktopText)  
         ;LV_Insert(, , title, desktop)  
         idArray.Push(win_id)    
 
@@ -918,14 +935,60 @@ return
 ; 
 DeleteSearchChar: 
 
-if search = 
-    return 
+    if search = 
+        return 
 
-StringTrimRight, search, search, 1 
-GuiControl,, Edit1, %search% 
-GoSub, RefreshWindowList 
+    StringTrimRight, search, search, 1 
+    GuiControl,, Edit1, %search% 
+    GoSub, RefreshWindowList 
 
 return 
+
+#If guiActive = 1 
+
+    #If useVirtualDesktops = 1
+        F1::  
+            winid := sortedElementsArray[selectedIndex][2]        
+            VD.MoveWindowToDesktopNum("ahk_id" winid,1)          
+            title := sortedElementsArray[selectedIndex][1]        
+            LV_Modify(selectedIndex,, title, 1)
+        return
+        F2::  
+            winid := sortedElementsArray[selectedIndex][2]        
+            VD.MoveWindowToDesktopNum("ahk_id" winid,2)          
+            title := sortedElementsArray[selectedIndex][1]        
+            LV_Modify(selectedIndex,, title, 2)
+        return
+        F3::  
+            winid := sortedElementsArray[selectedIndex][2]        
+            VD.MoveWindowToDesktopNum("ahk_id" winid,3)          
+            title := sortedElementsArray[selectedIndex][1]        
+            LV_Modify(selectedIndex,, title, 3)
+        return    
+        F10::
+            winid := sortedElementsArray[selectedIndex][2]     
+            VD.TogglePinWindow("ahk_id" winid)  
+            title := sortedElementsArray[selectedIndex][1]        
+            desktopNum := VD.getDesktopNumOfWindow("ahk_id" winid)      
+            desktopText := desktopNum     
+            if(desktopNum = 0) 
+            {
+            desktopText = pinned
+            }
+            LV_Modify(selectedIndex,, title, desktopText)        
+        return
+#If
+
+#If guiActive = 1
+
+    #If usedeltoendtask = 1
+        DEL::
+            winid := sortedElementsArray[selectedIndex][2]        
+            WinClose, ahk_id %winid% 
+            LV_Delete(selectedIndex)        
+        return
+    #If
+#If
 
 ;---------------------------------------------------------------------- 
 ; 
@@ -934,6 +997,7 @@ return
 ActivateWindow:    
     
     Gui, Submit
+    guiActive := 0
     ;MsgBox, %selectedIndex%
     ;MsgBox, %index%    
     
@@ -946,6 +1010,7 @@ ActivateWindow:
 
     GetKeyState, state, Alt
     if (state = "D") {
+        guiActive := 0
         WinClose, ahk_id %window_id%
         return
     } 
@@ -994,19 +1059,19 @@ return
 ; 
 ActivateWindowInBackgroundIfEnabled: 
 
-if activateselectioninbg = 
-    return 
+    if activateselectioninbg = 
+        return 
 
-; Don't do it just after the switcher is activated. It is confusing 
-; if active window is changed immediately. 
-WinGet, id, ID, ahk_id %switcher_id% 
-if id = 
-    return 
+    ; Don't do it just after the switcher is activated. It is confusing 
+    ; if active window is changed immediately. 
+    WinGet, id, ID, ahk_id %switcher_id% 
+    if id = 
+        return 
 
-if bgactivationdelay = 
-    GoSub ActivateWindowInBackground 
-else 
-    settimer, BgActivationTimer, %bgactivationdelay% 
+    if bgactivationdelay = 
+        GoSub ActivateWindowInBackground 
+    else 
+        settimer, BgActivationTimer, %bgactivationdelay% 
 
 return 
 
@@ -1017,9 +1082,9 @@ return
 ; 
 BgActivationTimer: 
 
-settimer, BgActivationTimer, off 
+    settimer, BgActivationTimer, off 
 
-GoSub ActivateWindowInBackground 
+    GoSub ActivateWindowInBackground 
 
 return 
 
@@ -1029,7 +1094,7 @@ return
 ; 
 CleanExit: 
 
-settimer, BgActivationTimer, off 
+    settimer, BgActivationTimer, off 
 
 exit 
 
@@ -1038,9 +1103,8 @@ exit
 ; Cancel keyboard input if GUI is closed. 
 ; 
 GuiClose: 
-
+    guiActive := 0
     send, {esc} 
-
 return 
 
 ;---------------------------------------------------------------------- 
@@ -1063,24 +1127,24 @@ return
 ; 
 MoveSwitcher: 
 
-direction *= 100 
-WinGetPos, x, y, width, , ahk_id %switcher_id% 
-x += %direction% 
+    direction *= 100 
+    WinGetPos, x, y, width, , ahk_id %switcher_id% 
+    x += %direction% 
 
-if x < 0 
-    x = 0 
-else 
-{ 
-   SysGet screensize, MonitorWorkArea 
-   screensizeRight -= %width% 
-   if x > %screensizeRight% 
-      x = %screensizeRight% 
-} 
+    if x < 0 
+        x = 0 
+    else 
+    { 
+    SysGet screensize, MonitorWorkArea 
+    screensizeRight -= %width% 
+    if x > %screensizeRight% 
+        x = %screensizeRight% 
+    } 
 
-prevdelay = %A_WinDelay%  
-SetWinDelay, -1 
-WinMove, ahk_id %switcher_id%, , %x%, %y% 
-SetWinDelay, %prevdelay% 
+    prevdelay = %A_WinDelay%  
+    SetWinDelay, -1 
+    WinMove, ahk_id %switcher_id%, , %x%, %y% 
+    SetWinDelay, %prevdelay% 
 
 return 
 
@@ -1090,8 +1154,9 @@ return
 ; 
 CloseIfInactive: 
 
-ifwinnotactive, ahk_id %switcher_id% 
-    send, {esc} 
+    ifwinnotactive, ahk_id %switcher_id% 
+        guiActive := 0
+        send, {esc} 
 
 return
 
