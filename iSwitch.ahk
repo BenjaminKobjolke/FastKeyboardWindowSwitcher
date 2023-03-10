@@ -800,6 +800,10 @@ RefreshWindowList:
             {
                 CLV.Row(A_Index, , 0x25822B)
             }
+            else if(desktop = 0) 
+            {
+                CLV.Row(A_Index, , 0x006868)
+            }            
             else
             {
                 ;CLV.Row(A_Index, , 0x006868)
