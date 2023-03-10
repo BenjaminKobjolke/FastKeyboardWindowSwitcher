@@ -404,7 +404,8 @@ HotkeyAction:
     }    
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
-    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch 
+    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch     
+    WinSet, Redraw, , ahk_id %HLV%
     ;GuiControl,Move,index, % "w" listWidth  " h" listHeight 
     GuiControl,Move,indexListView, % "w" listWidth  " h" listHeight 
     ; If we determine the ID of the switcher window here then 
@@ -784,7 +785,7 @@ RefreshWindowList:
 
         if digitshortcuts <> 
         {
-            if numwin <= 10 
+            if numwin < 10 
             {      
                 title = %counter% %title%
             }
