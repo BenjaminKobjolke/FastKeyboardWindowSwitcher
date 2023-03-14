@@ -78,15 +78,22 @@ IniRead, guiSpacingHorizontal, settings.ini, gui, spacingHorizontal , %DEFAULT_G
 IniRead, guiSpacingVertical, settings.ini, gui, spacingVertical , %DEFAULT_GUI_SPACING_VERTICAL%
 IniRead, guiShowHeader, settings.ini, gui, showheader , 
 IniRead, guiTextColor, settings.ini, gui, textColor , 33C4FF
+
+IniRead, guiTextColor, settings.ini, gui, textColor , 33C4FF
+IniRead, guiTextColorInput, settings.ini, gui, textColorInput , FFFFFF
 IniRead, guiTextSize, settings.ini, gui, textSize , 20
 IniRead, guiTransparency, settings.ini, gui, transparency , 180
 
+IniRead, useVirtualDesktops, settings.ini, virtualdesktops, enable , 
+IniRead, guiVirtualDesktopOtherTextColor, settings.ini, gui, otherDesktopsTextColor , 0x006868
+IniRead, guiVirtualDesktopAllDesktopsTextColor, settings.ini, gui, allDesktopsTextColor , 0x333333
 
 ; set this to yes if you want to select the only matching window 
 ; automatically 
 IniRead, autoactivateifonlyone, settings.ini, settings, autoactivateifonlyone , 1
 IniRead, usedeltoendtask, settings.ini, settings, usedeltoendtask , 0
-IniRead, useVirtualDesktops, settings.ini, virtualdesktops, enable , 
+
+IniRead, showInput, settings.ini, settings, showinput, 0 
 
 sortedElementsArray := Array()
 guiActive := 0
@@ -333,6 +340,14 @@ SetupGui:
         columns := columns . "|Desktop"
     }
 
+    
+    if showInput = 1
+    {
+        Gui,Font,s%guiTextSize% c%guiTextColorInput% bold,Calibri
+        Gui, Add, Text, vInputText, 
+        Gui,Font,s%guiTextSize% c%guiTextColor% bold,Calibri
+    }    
+
     Gui, Add, ListView, vindexListView gMyListView hwndHLV x20 y20 -E0x200 AltSubmit -VScroll  -Multi  -WantF2  -Hdr NoSort NoSortHdr -E0x200, %columns%
     if guiShowHeader = 1
     {
@@ -379,6 +394,7 @@ HotkeyAction:
     numallwin = 0 
     
     GuiControl,, Edit1 
+    GuiControl,, InputText 
     GoSub, RefreshWindowList 
 
     WinGet, orig_active_id, ID, A 
@@ -398,6 +414,8 @@ HotkeyAction:
     width := dimensions[3]
     height := dimensions[4]
 
+    inputTextX := 28
+
     desktopColumnWith := 0
     if useVirtualDesktops = 1
     {
@@ -409,6 +427,13 @@ HotkeyAction:
     statusBarHeight := 50
     listWidth := width - 10
     listHeight := height - 10 - statusBarHeight
+    litViewY := 0
+    if showInput = 1
+    {
+        listHeight := listHeight - 50
+        litViewY := 50
+    }
+
     
     column1Width := listWidth - desktopColumnWidth
 
@@ -424,7 +449,8 @@ HotkeyAction:
     
     WinSet, Redraw, , ahk_id %HLV%
     ;GuiControl,Move,index, % "w" listWidth  " h" listHeight 
-    GuiControl,Move,indexListView, % "w" listWidth  " h" listHeight 
+    GuiControl,Move,indexListView, % "w" listWidth  " h" listHeight "y" litViewY
+    GuiControl,Move,InputText, % "w" listWidth "x" inputTextX
     ; If we determine the ID of the switcher window here then 
     ; why doesn't it appear in the window list when the script is 
     ; run the first time? (Note that RefreshWindowList has already 
@@ -542,7 +568,8 @@ HotkeyAction:
         ; process typed character 
 
         search = %search%%input% 
-        
+        ;T oolTip, %search%
+
         ; check if the search matches a shortcut
         ; iterate shortcuts
         index = 0
@@ -560,6 +587,7 @@ HotkeyAction:
 
         ;T oolTip, %search%
         GuiControl,, Edit1, %search% 
+        GuiControl,, InputText, %search% 
         GoSub, RefreshWindowList 
     } 
 
@@ -746,7 +774,7 @@ RefreshWindowList:
             return 
         } 
 
-    ;ToolTip, %winlist%
+    ;T oolTip, %winlist%
     arrayindex = 1 
     
     LV_Delete()  
@@ -822,16 +850,15 @@ RefreshWindowList:
         { 
             if(desktop = currentDesktop) 
             {
-                CLV.Row(A_Index, , 0x25822B)
+                CLV.Row(A_Index, , %guiTextColor%)
             }
             else if(desktop = 0) 
-            {
-                CLV.Row(A_Index, , 0x006868)
+            {                
+                CLV.Row(A_Index, , guiVirtualDesktopAllDesktopsTextColor)
             }            
             else
             {
-                ;CLV.Row(A_Index, , 0x006868)
-                CLV.Row(A_Index, , 0x333333)
+                CLV.Row(A_Index, , guiVirtualDesktopOtherDesktopsTextColor)
             }
         }
         counter++  
@@ -946,6 +973,7 @@ DeleteSearchChar:
 
     StringTrimRight, search, search, 1 
     GuiControl,, Edit1, %search% 
+    GuiControl,,InputText, %search% 
     GoSub, RefreshWindowList 
 
 return 
