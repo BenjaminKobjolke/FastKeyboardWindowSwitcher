@@ -1051,9 +1051,9 @@ UpdateStatusBar:
     }
 
     if(usedeltoendtask = 1) {
-        newText = %newText% | End tasks with DEL enabled
+        newText = %newText% | Kill tasks with DEL enabled
     } else {
-        newText = %newText% | End tasks with DEL disabled
+        newText = %newText% | Kill tasks with DEL disabled
     }    
     SB_SetText(newText, 1)
 return
