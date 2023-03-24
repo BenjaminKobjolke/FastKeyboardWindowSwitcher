@@ -20,12 +20,14 @@ Then you have adjust the following settings within that file.
 ### [settings]
 
 #### autoactivateifonlyone
+
 `autoactivateifonlyone=1`
 If you type and there is only one matching window then that window will be automatically be activated. No need to press enter.
 
 ### [gui]
 
 #### spacing
+
 `spacingHorizontal=10`
 The spacing of the iSwitch window from the left your screen in percent.
 10 means the window will start 10% from the left the active screen and will also keep the same distance from the right side.
@@ -35,6 +37,7 @@ The spacing of the iSwitch window from the top your screen in percent.
 10 means the window will start 10% from the top the active screen and will also keep the same distance from the bottom side.
 
 #### font
+
 `fontColor=33C4FF`
 Text color in hex values or string names like "blue", "yellow", "green"...
 Default is 33C4FF.
@@ -44,11 +47,11 @@ Font size.
 Default is 20.
 
 #### general
+
 `transparency=180`
 Window transparency.
 Default is 180.
 Values between 0 and 255 to indicate the degree of transparency. 0 makes the window invisible while 255 makes it opaque.
-
 
 ## Special configuration files
 
@@ -90,3 +93,15 @@ So if you type "wa" it will search for winamp.
 Rename shortcuts_example.txt to shortcutslist.txt and add the windows you do not want to show up to that list.
 One shortcut per line
 Example: wa|winamp
+
+### 24.03.2023 - search min length
+
+settings.ini
+settings - searchminlength
+
+Default value = 1
+
+#### Description
+
+If the window first opens and you starting typing, the window list will not be updated until this min length is reached.
+This improves the performance. Otherwise the input lags and it might miss the first character you type.

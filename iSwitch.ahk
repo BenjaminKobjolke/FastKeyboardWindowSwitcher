@@ -95,6 +95,8 @@ IniRead, usedeltoendtask, settings.ini, settings, usedeltoendtask , 0
 
 IniRead, showInput, settings.ini, settings, showinput, 0 
 
+IniRead, searchMinLength, settings.ini, settings, searchminlength, 1 
+
 sortedElementsArray := Array()
 guiActive := 0
 ; set this to yes if you want to enable tab completion (see above) 
@@ -588,7 +590,10 @@ HotkeyAction:
         ;T oolTip, %search%
         GuiControl,, Edit1, %search% 
         GuiControl,, InputText, %search% 
-        GoSub, RefreshWindowList 
+        length := StrLen(search)
+        if(length > 1)  {
+            GoSub, RefreshWindowList 
+        }
     } 
 
     Gosub, CleanExit 
