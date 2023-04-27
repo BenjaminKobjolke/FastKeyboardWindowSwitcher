@@ -15,6 +15,14 @@ class TrayControl {
         return this.trayArray.MaxIndex()
     }
 
+    leftClick(windId) {
+        this.click(windId, "L", false)
+    }    
+
+    doubleClick(windId) {
+        this.click(windId, "L", true)
+    }       
+
     rightClick(windId) {
         this.click(windId, "R", false)
     }

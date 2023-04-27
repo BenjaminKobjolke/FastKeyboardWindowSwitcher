@@ -921,7 +921,7 @@ RefreshWindowList:
     }
 
     if numwin = 1 
-        if autoactivateifonlyone = 1
+        if autoactivateifonlyone = 1 and showTrayIcons != 1
         { 
             ; only autoactivate if the search string is not empty
             ; otherwise the gui would close if only one windows is available
@@ -1110,7 +1110,11 @@ UpdateStatusBar:
     }   
 
     if(autoactivateifonlyone = 1) {
-        newText = %newText% | Auto activate enabled
+        if(showTrayIcons = 1) {
+            newText = %newText% | Auto activate not supported for tray icons  
+        } else {
+            newText = %newText% | Auto activate enabled
+        }                
     } else {
         newText = %newText% | Auto activate disabled
     }   
@@ -1147,8 +1151,18 @@ ActivateWindow:
     
 
     if(showTrayIcons) {            
-
-        trayControl.rightClick(window_id)       
+        GetKeyState, state, Ctrl
+        if (state = "D") {
+            GetKeyState, state, Alt
+            if (state = "D") {
+                trayControl.doubleClick(window_id)       
+            } else {
+                trayControl.leftClick(window_id)       
+            }
+            
+        } else {
+            trayControl.rightClick(window_id)       
+        }
         
         Sleep, 200
         Gui, Submit    
