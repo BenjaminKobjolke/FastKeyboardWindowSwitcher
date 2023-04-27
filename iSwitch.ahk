@@ -11,17 +11,24 @@ SetWorkingDir %A_ScriptDir%
 ListLines Off
 SetBatchLines -1
 
-#Include, %A_ScriptDir%/autohotkey_libraries/guitools.ahk
-#Include, %A_ScriptDir%/github_modules/Class_LV_Colors/Sources/Class_LV_Colors.ahk
-#Include %A_ScriptDir%\node_modules
-#Include biga.ahk\export.ahk
-A := new biga()
 ; close script from another script by sending exit as argument
 command := A_Args[1]
 if (command == "exit") 
 {
 	ExitApp
 }
+
+#Include, %A_ScriptDir%/libraries/tray_lib.ahk
+#Include, %A_ScriptDir%/autohotkey_libraries/WinTools.ahk
+#Include, %A_ScriptDir%/github_modules/Class_LV_Colors/Sources/Class_LV_Colors.ahk
+
+#Include %A_ScriptDir%\node_modules
+#Include biga.ahk\export.ahk
+A := new biga()
+
+#Include %A_ScriptDir%\classes\TrayControl.ahk
+trayControl := new TrayControl()
+
 
 ;-------------------------------------------------------------------------------
 RunAsAdmin: ; run as administrator
@@ -79,6 +86,8 @@ If Not A_IsAdmin {
 ; 
 ; User configuration 
 ; 
+
+IniRead, hotkeyReload, settings.ini, debug, hotkeyReload , 0
 
 DEFAULT_GUI_SPACING_HORIZONTAL := 20
 DEFAULT_GUI_SPACING_VERTICAL := 20
@@ -149,9 +158,12 @@ closeifinactivated =
 
 selectedIndex := 1
 
+showTrayIcons := 0
+
+forceWindowListRefresh := 0
+
 if useVirtualDesktops = 1
 {
-
     DetectHiddenWindows On
     #Include, %A_ScriptDir%/github_modules/VD.ahk/_VD.ahk
     dummyFunction1() {
@@ -289,6 +301,18 @@ windowIsOpen := 0
 GoSub, SetupGui
 
 return
+
+#If hotkeyReload = 1
+    if(!A_IsCompiled) {    
+        if(hotkeyReload = 1) {
+            #y::
+                
+                Send ^s
+                reload
+            return     
+        }	
+    }
+#If
 
 /*
 #If useVirtualDesktops = 1
@@ -454,7 +478,7 @@ HotkeyAction:
     }    
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
-    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch  
+    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch      
     guiActive := 1
     
     WinSet, Redraw, , ahk_id %HLV%
@@ -603,7 +627,7 @@ HotkeyAction:
             GoSub, RefreshWindowList 
         }
     } 
-
+    
     Gosub, CleanExit 
 
 return 
@@ -618,93 +642,112 @@ return
 RefreshWindowList: 
     ; refresh the list of windows if necessary 
     
-    if ( dynamicwindowlist = "yes" or numallwin = 0 ) 
-    { 
+    if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
+    {             
+        forceWindowListRefresh := 0
         numallwin = 0 
         allwinDesktopIndex := Array()
 
-        WinGet, id, list, , , Program Manager 
-        Loop, %id% 
-        {               
-            StringTrimRight, this_id, id%a_index%, 0 
-            WinGetTitle, title, ahk_id %this_id% 
-
-            hwnd := id%A_Index%    
-            desktopNum := 0        
-            if useVirtualDesktops = 1 
-            {                
-                desktopNum := VD.getDesktopNumOfWindow("ahk_id" hwnd)
-                If (desktopNum < 0) ;-1 for invalid window, 0 for "Show on all desktops", 1 for Desktop 1
-                {
-                    continue
-                }
-                if desktopNum = 2
-                {
-                    ;MsgBox, %title% >%desktopNum%<
-                    ;continue
-                }
+        counter := 0
+        if(showTrayIcons = 1) {            
+            trayIcons := trayControl.list()
+            numallwin := trayControl.Length()
+            
+            Loop, % numallwin {
+                title := trayIcons[A_Index].process
+                this_id := trayIcons[A_Index].hwnd
+                ; replace pipe (|) characters in the window title, 
+                ; because Gui Add uses it for separating listbox items 
+                StringReplace, title, title, |, -, all  
                 
-            }            
+                counter += 1 
+                allwinarray%counter% = %title% 
+                allwinidarray%counter% = %this_id%   
+            }
+        } else {
+            WinGet, id, list, , , Program Manager 
+            Loop, %id% 
+            {               
+                StringTrimRight, this_id, id%a_index%, 0 
+                WinGetTitle, title, ahk_id %this_id% 
 
-            ; FIXME: windows with empty titles? 
-            if title = 
-                continue 
+                hwnd := id%A_Index%    
+                desktopNum := 0        
+                if useVirtualDesktops = 1 
+                {                
+                    desktopNum := VD.getDesktopNumOfWindow("ahk_id" hwnd)
+                    If (desktopNum < 0) ;-1 for invalid window, 0 for "Show on all desktops", 1 for Desktop 1
+                    {
+                        continue
+                    }
+                    if desktopNum = 2
+                    {
+                        ;MsgBox, %title% >%desktopNum%<
+                        ;continue
+                    }
+                    
+                }            
 
-            ; don't add the switcher window 
-            if switcher_id = %this_id% 
-                continue 
-
-            ; show process name if enabled 
-            if showprocessname <> 
-            { 
-                WinGet, procname, ProcessName, ahk_id %this_id% 
-
-                stringgetpos, pos, procname, . 
-                if ErrorLevel <> 1 
-                { 
-                    stringleft, procname, procname, %pos% 
-                } 
-
-                stringupper, procname, procname 
-                title = %procname%: %title% 
-            } 
-
-            ; don't add titles which match any of the filters 
-            if filterlist <> 
-            { 
-                filtered = 
-
-                loop 
-                { 
-                    stringtrimright, filter, filters%a_index%, 0 
-                    if filter = 
-                      break 
-                    else 
-                        ifinstring, title, %filter% 
-                        { 
-                           filtered = yes 
-                           break 
-                        } 
-                } 
-
-                if filtered = yes 
+                ; FIXME: windows with empty titles? 
+                if title = 
                     continue 
-            } 
 
-            ; replace pipe (|) characters in the window title, 
-            ; because Gui Add uses it for separating listbox items 
-            StringReplace, title, title, |, -, all 
-            
-            numallwin += 1 
-            allwinarray%numallwin% = %title% 
-            allwinidarray%numallwin% = %this_id% 
+                ; don't add the switcher window 
+                if switcher_id = %this_id% 
+                    continue 
 
-            
-            if useVirtualDesktops = 1
-            {                
-                allwinDesktopIndex[numallwin] := desktopNum
-            }            
-        } 
+                ; show process name if enabled 
+                if showprocessname <> 
+                { 
+                    WinGet, procname, ProcessName, ahk_id %this_id% 
+
+                    stringgetpos, pos, procname, . 
+                    if ErrorLevel <> 1 
+                    { 
+                        stringleft, procname, procname, %pos% 
+                    } 
+
+                    stringupper, procname, procname 
+                    title = %procname%: %title% 
+                } 
+
+                ; don't add titles which match any of the filters 
+                if filterlist <> 
+                { 
+                    filtered = 
+
+                    loop 
+                    { 
+                        stringtrimright, filter, filters%a_index%, 0 
+                        if filter = 
+                        break 
+                        else 
+                            ifinstring, title, %filter% 
+                            { 
+                            filtered = yes 
+                            break 
+                            } 
+                    } 
+
+                    if filtered = yes 
+                        continue 
+                } 
+
+                ; replace pipe (|) characters in the window title, 
+                ; because Gui Add uses it for separating listbox items 
+                StringReplace, title, title, |, -, all 
+                
+                numallwin += 1 
+                allwinarray%numallwin% = %title% 
+                allwinidarray%numallwin% = %this_id% 
+
+                
+                if useVirtualDesktops = 1
+                {                
+                    allwinDesktopIndex[numallwin] := desktopNum
+                }            
+            }             
+        }       
     } 
 
     ; filter the window list according to the search criteria 
@@ -1044,12 +1087,32 @@ return
     return
 #If
 
+#If guiActive = 1
+    F1::  
+        if(showTrayIcons = 1) {
+            showTrayIcons = 0            
+        } else {
+            showTrayIcons = 1            
+        }
+        forceWindowListRefresh = 1      
+        GoSub UpdateStatusBar
+        GoSub RefreshWindowList
+    return
+#If
+
+
 UpdateStatusBar:   
     newText = 
-    if(autoactivateifonlyone = 1) {
-        newText = Auto activate enabled
+    if(showTrayIcons = 1) {
+        newText = Listing tray icons
     } else {
-        newText = Auto activate disabled
+        newText = Listing windows
+    }   
+
+    if(autoactivateifonlyone = 1) {
+        newText = %newText% | Auto activate enabled
+    } else {
+        newText = %newText% | Auto activate disabled
     }   
     
     if(useVirtualDesktops = 1) {
@@ -1059,7 +1122,11 @@ UpdateStatusBar:
     }
 
     if(usedeltoendtask = 1) {
-        newText = %newText% | Kill tasks with DEL enabled
+        if(showTrayIcons = 1) {
+            newText = %newText% | Kill tasks with DEL not supported for tray icons  
+        } else {
+            newText = %newText% | Kill tasks with DEL enabled
+        }
     } else {
         newText = %newText% | Kill tasks with DEL disabled
     }    
@@ -1070,18 +1137,29 @@ return
 ; 
 ; Activate selected window 
 ; 
-ActivateWindow:    
-    
-    Gui, Submit
-    guiActive := 0
-    ;MsgBox, %selectedIndex%
-    ;MsgBox, %index%    
-    
-    window_id := idArray[selectedIndex]    
+ActivateWindow:
+    winTools := new WinTools()
+    if(showTrayIcons) {                      
+        winTools.moveMouseToCurrentWindowCenter()    
+    }
 
+    window_id := idArray[selectedIndex]   
     
-    ;stringtrimleft, window_id, idarray%index%, 0 
-    ;MsgBox, %window_id%
+
+    if(showTrayIcons) {            
+
+        trayControl.rightClick(window_id)       
+        
+        Sleep, 200
+        Gui, Submit    
+        guiActive := 0 
+        
+        return
+    }
+
+    Gui, Submit    
+    guiActive := 0 
+    
     WinActivate, ahk_id %window_id% 
 
     GetKeyState, state, Alt
@@ -1091,24 +1169,21 @@ ActivateWindow:
         return
     } 
 
-
+    winTools.moveMouseToCurrentWindowCenter()    
+    /*
     GetKeyState, state, Ctrl
     if (state = "D") {
-        ;MouseGetPos, xpos,ypos
-        ;WinMove,ahk_id %window_id%,, %xpos%,%ypos%    
         Send, ^!m
         
-    } else {
-        ; Move mouse to current window
-        WinGetPos, winTopL_x, winTopL_y, width, height, A
-        winCenter_x := winTopL_x + width/2
-        winCenter_y := winTopL_y + height/2
-        ;MouseMove, X, Y, 0 ; does not work with multi-monitor
-        DllCall("SetCursorPos", int, winCenter_x, int, winCenter_y)
-        ;T ooltip winTopL_x:%winTopL_x% winTopL_y:%winTopL_y% winCenter_x:%winCenter_x% winCenter_y:%winCenter_y%
-    }
+    } 
     */
+
+
+    ;T ooltip winTopL_x:%winTopL_x% winTopL_y:%winTopL_y% winCenter_x:%winCenter_x% winCenter_y:%winCenter_y%    
+    
 return 
+
+
 
 ;---------------------------------------------------------------------- 
 ; 
@@ -1258,7 +1333,8 @@ GetClientSize(hwnd, ByRef w, ByRef h)
 
 CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
     
-    CurrentMonitorIndex := GetCurrentMonitorIndex()	
+    winTools := new WinTools()
+    CurrentMonitorIndex := winTools.getCurrentMonitorIndex()	
     SysGet, MonitorWorkArea, MonitorWorkArea, %CurrentMonitorIndex%
     
     monitorWidth := MonitorWorkAreaRight - MonitorWorkAreaLeft

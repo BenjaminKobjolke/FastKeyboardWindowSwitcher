@@ -101,6 +101,13 @@ settings - searchminlength
 
 Default value = 1
 
+
+### 27.04.2023 - tray icon support
+
+Press F1 while the main window is open to switch between listing open windows and tray icons.
+Selecting and item and pressing enter will open the right-click menu of that tray icon.
+
+
 #### Description
 
 If the window first opens and you starting typing, the window list will not be updated until this min length is reached.
