@@ -921,19 +921,22 @@ RefreshWindowList:
     }
 
     if numwin = 1 
-        if autoactivateifonlyone = 1 and showTrayIcons != 1
+        if autoactivateifonlyone = 1 
         { 
-            ; only autoactivate if the search string is not empty
-            ; otherwise the gui would close if only one windows is available
-            ; and you think the app doesnt work
-            if search != 
+            if showTrayIcons = 0
             {
-                while(A_TimeIdle < 100) 
-                {                
-                    Sleep, 100
-                }            
-                GoSub, ActivateWindow 
-                Gosub, CleanExit             
+                ; only autoactivate if the search string is not empty
+                ; otherwise the gui would close if only one windows is available
+                ; and you think the app doesnt work
+                if search != 
+                {
+                    while(A_TimeIdle < 100) 
+                    {                
+                        Sleep, 100
+                    }            
+                    GoSub, ActivateWindow 
+                    Gosub, CleanExit             
+                }
             }
         } 
 

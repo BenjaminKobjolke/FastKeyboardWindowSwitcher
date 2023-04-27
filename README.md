@@ -101,12 +101,12 @@ settings - searchminlength
 
 Default value = 1
 
-
 ### 27.04.2023 - tray icon support
 
 Press F1 while the main window is open to switch between listing open windows and tray icons.
 Selecting and item and pressing enter will open the right-click menu of that tray icon.
-
+Holding down ctrl before pressing enter will open the left-click menu of that tray icon.
+Holding down ctrl and alt before pressing enter will double left-click the tray icon.
 
 #### Description
 
