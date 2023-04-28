@@ -800,28 +800,28 @@ DeleteSearchChar:
 return 
 
 #If guiActive = 1 and S.useVirtualDesktops() = 1
-    F2::  
+    F3::  
         window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,1)          
         LV_Modify(selectedIndex,, title, 1)
     return
-    F3::  
+    F4::  
         window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,2)          
         LV_Modify(selectedIndex,, title, 2)
     return
-    F4::  
+    F5::  
         window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,3)          
         LV_Modify(selectedIndex,, title, 3)
     return    
-    F10::
+    F10::   
         window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
@@ -883,9 +883,11 @@ return
         if(selectedIndex < 1) {
             return
         }
+        if(showTrayIcons = 1) {
+            return
+        } 
         window := filteredWindows.get(selectedIndex)
         windowHistory.add(window)
-
     return
 #If
 

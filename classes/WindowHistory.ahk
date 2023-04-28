@@ -7,8 +7,8 @@ class WindowHistory {
     }
 
     setup() {
-     this.windows := new Windows()    
-
+        this.windows := new Windows()    
+        FileCreateDir, %A_ScriptDir%/history    
         FileRead, str, %A_ScriptDir%\history\history.json
         ;M sgBox, %str%
         ;obj := Jxon_Load( ByRef str  , object_base := "", array_base := ""  )
