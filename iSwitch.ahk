@@ -2,8 +2,8 @@
 ;@Ahk2Exe-SetMainIcon icon.ico
 ;@Ahk2Exe-ExeName %A_ScriptDir%\bin\iswitch.exe
 
-#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+#NoEnv 
+SendMode Input
 #SingleInstance force
 SetTitleMatchMode, 2
 SetWorkingDir %A_ScriptDir%
@@ -31,59 +31,11 @@ trayControl := new TrayControl()
 #Include %A_ScriptDir%\classes\Settings.ahk
 S := new Settings()
 
-
-;-------------------------------------------------------------------------------
-RunAsAdmin: ; run as administrator
-;-------------------------------------------------------------------------------
 If Not A_IsAdmin {
 	Run, *RunAs %A_ScriptFullPath% ; Requires v1.0.92.01+
 	ExitApp
 }
-; 
-; iswitchw - Incrementally switch between windows using substrings
-;
-; [MODIFIED by ezuk, 3 July 2008, changes noted below. Cosmetics only.] 
-; 
-; Required AutoHotkey version: 1.0.25+ 
-; 
-; When this script is triggered via its hotkey the list of titles of 
-; all visible windows appears. The list can be narrowed quickly to a 
-; particular window by typing a substring of a window title. 
-; 
-; When the list is narrowed the desired window can be selected using 
-; the cursor keys and Enter. If the substring matches exactly one 
-; window that window is activated immediately (configurable, see the 
-; "autoactivateifonlyone" variable). 
-; 
-; The window selection can be cancelled with Esc. 
-; 
-; The switcher window can be moved horizontally with the left/right 
-; arrow keys if it blocks the view of windows under it. 
-; 
-; The switcher can also be operated with the mouse, although it is 
-; meant to be used from the keyboard. A mouse click activates the 
-; currently selected window. Mouse users may want to change the 
-; activation key to one of the mouse keys. 
-; 
-; If enabled possible completions are offered when the same unique 
-; substring is found in the title of more than one window. 
-; 
-; For example, the user typed the string "co" and the list is 
-; narrowed to two windows: "Windows Commander" and "Command Prompt". 
-; In this case the "command" substring can be completed automatically, 
-; so the script offers this completion in square brackets which the 
-; user can accept with the TAB key: 
-; 
-;     co[mmand] 
-; 
-; This feature can be confusing for novice users, so it is disabled 
-; by default. 
-; 
-; 
-; For the idea of this script the credit goes to the creators of the 
-; iswitchb package for the Emacs editor 
-; 
-; 
+
 ;---------------------------------------------------------------------- 
 ; 
 ; User configuration 
@@ -93,9 +45,6 @@ autoActivateIfOnlyOne := S.autoActivateIfOnlyOne()
 
 sortedElementsArray := Array()
 guiActive := 0
-; set this to yes if you want to enable tab completion (see above) 
-; it has no effect if firstlettermatch (see below) is enabled 
-tabcompletion = yes
 
 ; set this to yes to enable first letter match mode where the typed 
 ; search string must match the first letter of words in the 
@@ -106,7 +55,7 @@ tabcompletion = yes
 ;  AutoHotkey - Documentation 
 ;  Anne's Diary 
 ; 
-firstlettermatch = 
+firstlettermatch = 0
 
 ; set this to yes to enable activating the currently selected 
 ; window in the background 
@@ -257,20 +206,9 @@ if shortcutslist <>
     amountOfShortcuts := index 
 } 
 
-;M sgBox, %amountOfShortcuts%
-;search = tb
-
-
-
-;M sgBox, % shortcuts[1][1] 
-;---------------------------------------------------------------------- 
-; 
-; I never use the CapsLock key, that's why I chose it. 
-; 
-
 windowIsOpen := 0
 
-GoSub, SetupGui
+#Include %A_ScriptDir%\includes\inc_gui.ahk
 
 return
 
@@ -317,80 +255,6 @@ CheckHotkey:
         GoSub, CloseGui
     }
 return
-/*
-^!c::
-    GoSub, HotkeyAction
-return
-*/
-
-SetupGui:
-    Gui, +LastFound +AlwaysOnTop -Caption   
-    Gui, Color, black,black
-    WinSet, Transparent, % S.guiTransparency()
-    
-    Gui,Font,s14 c%guiTextColor% bold,Calibri
-    Gui, Add, StatusBar,  vMyStatusBar  -Theme BackgroundSilver
-    GoSub, UpdateStatusBar
-    
-    textSize := S.guiTextSize()
-    textColor := S.guiTextColor()
-    Gui,Font,s%textSize% c%textColor% bold,Calibri
-
-    ;WS_EX_CLIENTEDGE = E0x200 removes the border
-    ;Gui, Add, ListBox, vindex gListBoxClick x2 y2 -E0x200 AltSubmit -VScroll
-    columns = Name
-    if S.showProcessName()
-    {
-        columns := columns . "|Process"
-    }
-    if S.useVirtualDesktops() 
-    {
-        columns := columns . "|Desktop"
-    }
-    
-    if S.showInput()
-    {
-        textColorInput := S.guiTextColorInput()
-        Gui,Font,s%textSize% c%textColorInput% bold,Calibri
-        Gui, Add, Text, vInputText, 
-        Gui,Font,s%textSize% c%textColor% bold,Calibri
-    }    
-
-    Gui, Add, ListView, vindexListView gMyListView hwndHLV x20 y20 -E0x200 AltSubmit -VScroll -HScroll -Multi -WantF2 -Hdr NoSort NoSortHdr 0x2000 -E0x200, %columns%
-    if S.guiShowHeader()
-    {
-        GuiControl, +Hdr, indexListView
-    }
-
-    CLV := New LV_Colors(HLV)
-
-return
-
-MyListView:  
-    ToolTip, %A_GuiEvent%      
-    if (A_GuiEvent = "DoubleClick")
-    {
-        LV_GetText(RowText, A_EventInfo)
-        ;T oolTip You double-clicked row number %A_EventInfo%. Text: "%RowText%"        
-    }
-    if (A_GuiEvent = "I") 
-    {        
-        selectedIndex :=  A_EventInfo    
-    }
-    
-return
-
-CloseGui:
-    guiActive := 0
-    Gui, cancel 
-
-    SetTimer,CheckIfGuiStillActive, Off
-    ; restore the originally active window if 
-    ; activateselectioninbg is enabled 
-    if activateselectioninbg <> 
-        WinActivate, ahk_id %orig_active_id% 
-
-return
 
 HotkeyAction:    
     search = 
@@ -402,92 +266,10 @@ HotkeyAction:
         }        
     }
 
-    GuiControl,, Edit1 
-    GuiControl,, InputText 
-    GoSub, RefreshWindowList 
-
-    WinGet, orig_active_id, ID, A 
-    prev_active_id = %orig_active_id%
-
-    dimensions := CalculateWindowDimensions(S.guiSpacingHorizontal(), S.guiSpacingVertical())
-    if(dimensions[3] <= 0 && dimensions[4] <= 0) {
-        dimensions := CalculateWindowDimensions(S.defaultGuiSpacingHorizontal(), S.defaultGuiSpacingVertical())
-    } else if(dimensions[3] <= 0 ) {
-        dimensions := CalculateWindowDimensions(S.defaultGuiSpacingHorizontal(), S.guiSpacingVertical())
-    } else if(dimensions[4] <= 0 ) {
-        dimensions := CalculateWindowDimensions(S.guiSpacingHorizontal(), S.defaultGuiSpacingVertical())
-    }
-
-    x := dimensions[1]
-    y := dimensions[2]
-    width := dimensions[3] 
-    height := dimensions[4]
-    ;M sgBox, %x% %y% %width% %height%
-    inputTextX := 28
-
-    processColumnWidth := 0
-    if S.showProcessName()
-    {
-        processColumnWidth := width * 0.2
-    }
-
-    desktopColumnWidth := 0
-    if S.useVirtualDesktops()
-    {
-        desktopColumnWidth := width * 0.2
-    }
-
-    ;M sgbox, % "x" x " y" y " w" width " h" height 
-    
-    statusBarHeight := 50
-    listWidth := width - 10
-    listHeight := height - 10 - statusBarHeight
-    litViewY := 0
-    if S.showInput()
-    {
-        listHeight := listHeight - 50
-        litViewY := 50
-    }
-
-    
-    column1Width := listWidth - processColumnWidth - desktopColumnWidth
-    ;MsgBox, 1 %listWidth% 2 %column1Width% 3 %processColumnWidth% 4 %desktopColumnWidth %
-    ;MsgBox, %column1Width%
-    LV_ModifyCol(1, column1Width)
-    counter := 2
-     if S.showProcessName()
-    {   
-        LV_ModifyCol(counter, processColumnWidth)
-        counter := counter + 1
-    }     
-    if S.useVirtualDesktops()
-    {   
-        LV_ModifyCol(counter, desktopColumnWidth)
-    }    
-
-    ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
-    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch      
-    gui_id := WinExist("A")
-    SetTimer, CheckIfGuiStillActive, 500
-    ;MsgBox, %gui_id%
-    guiActive := 1
-    
-    WinSet, Redraw, , ahk_id %HLV%
-    ;GuiControl,Move,index, % "w" listWidth  " h" listHeight 
-    GuiControl,Move,indexListView, % "w" listWidth  " h" listHeight "y" litViewY
-    GuiControl,Move,InputText, % "w" listWidth "x" inputTextX
-    ; If we determine the ID of the switcher window here then 
-    ; why doesn't it appear in the window list when the script is 
-    ; run the first time? (Note that RefreshWindowList has already 
-    ; been called above). 
-    ; Answer: Because when this code runs first the switcher window 	
-    ; does not exist yet when RefreshWindowList is called. 
-    WinGet, switcher_id, ID, A 
-    ;WinSet, AlwaysOnTop, On, ahk_id %switcher_id% 
+    GoSub, UpdateGui
 
     Loop 
-    {
-  
+    {  
         Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
 
         if ErrorLevel = EndKey:enter 
@@ -604,14 +386,6 @@ HotkeyAction:
 
 return 
 
-CheckIfGuiStillActive:
-    id := WinActive("A")
-    
-    if(id <> gui_id)
-    {
-        GoSub, CloseGui
-    }
-return
 
 ;---------------------------------------------------------------------- 
 ; 
@@ -677,8 +451,6 @@ RefreshWindowList:
                 ; don't add the switcher window 
                 if switcher_id = %this_id% 
                     continue 
-
-
 
                 ; don't add titles which match any of the filters 
                 if filterlist <> 
@@ -789,14 +561,15 @@ RefreshWindowList:
                     continue    ; no match 
             } 
 
-        newEntry = %title%`r%this_id%`r%this_process_name%`r%this_desktop%
-        
-        winArray := StrSplit(newEntry, "`r") 
-        elementsArray.Push(winArray)
-        
-        if title = 
-            MsgBox, %newEntry%
-        
+        ;newEntry = %title%`r%this_id%`r%this_process_name%`r%this_desktop%
+        newEntry := Array()
+        newEntry.Push(title)
+        newEntry.Push(this_id)
+        newEntry.Push(this_process_name)
+        newEntry.Push(this_desktop)
+
+        elementsArray.Push(newEntry)
+
         numwin += 1 
         ;winarray%numwin% = %title% 
     } 
@@ -934,11 +707,16 @@ RefreshWindowList:
         } 
 
     GoSub ActivateWindowInBackgroundIfEnabled 
+    GoSub, CheckCompletion
 
+return 
+
+CheckCompletion:
+
+    if(S.tabComplete() = false) {
+        return
+    }
     completion = 
-
-    if tabcompletion = 
-        return 
 
     ; completion is not implemented for first letter match mode 
     if firstlettermatch <> 
@@ -950,7 +728,7 @@ RefreshWindowList:
 
     if search = 
         return 
-    
+
     if numwin = 1 
         return 
 
@@ -960,19 +738,20 @@ RefreshWindowList:
 
         loop, %numwin% 
         { 
-            stringtrimleft, title, winarray%a_index%, 0 
+            title := sortedElementsArray[A_Index][1]
 
             if nextchar = 
-            { 
+            {
                 substr = %search%%completion% 
                 stringlen, substr_len, substr 
                 stringgetpos, pos, title, %substr% 
-
+                ;MsgBox, %pos% %substr% %title%
                 if pos = -1 
+                {                   
                     break 
-
+                }
                 pos += %substr_len% 
-
+                ;ToolTip, %title% %pos%
                 ; if the substring matches the end of the 
                 ; string then no more characters can be completed 
                 stringlen, title_len, title 
@@ -986,26 +765,34 @@ RefreshWindowList:
                 ; than stringgetpos. strange... 
                 pos += 1 
                 stringmid, nextchar, title, %pos%, 1 
-                substr = %substr%%nextchar% 
-             } 
-             else 
-             { 
+                substr = %substr%%nextchar%
+                ;MsgBox, %substr% 
+            } 
+            else 
+            { 
                 stringgetpos, pos, title, %substr% 
                 if pos = -1 
+                {
                     break 
-             } 
+                }
+            } 
         } 
 
         if pos = -1 
             break 
         else 
+        {
+
             completion = %completion%%nextchar% 
+        }
     } 
 
     if completion <> 
+    {
         GuiControl,, Edit1, %search%[%completion%] 
-
-return 
+        GuiControl,, InputText, %search%[%completion%] 
+    }
+return
 
 WaitForUserToEndTyping:
     if(A_TimeIdle > 100) {
@@ -1093,43 +880,6 @@ return
         GoSub RefreshWindowList
     return
 #If
-
-
-UpdateStatusBar:   
-    newText = 
-    if(showTrayIcons = 1) {
-        newText = Listing tray icons
-    } else {
-        newText = Listing windows
-    }   
-
-    if(autoActivateIfOnlyOne) {
-        if(showTrayIcons = 1) {
-            newText = %newText% | Auto activate not supported for tray icons  
-        } else {
-            newText = %newText% | Auto activate enabled
-        }                
-    } else {
-        newText = %newText% | Auto activate disabled
-    }   
-    
-    if(S.useVirtualDesktops() = 1) {
-        newText = %newText% | Virtual Desktops enabled
-    } else {
-        newText = %newText% | Virtual Desktops disabled
-    }
-
-    if(S.useDelToEndTask()) {
-        if(showTrayIcons = 1) {
-            newText = %newText% | Kill tasks with DEL not supported for tray icons  
-        } else {
-            newText = %newText% | Kill tasks with DEL enabled
-        }
-    } else {
-        newText = %newText% | Kill tasks with DEL disabled
-    }    
-    SB_SetText(newText, 1)
-return
 
 ;---------------------------------------------------------------------- 
 ; 
@@ -1257,45 +1007,3 @@ CleanExit:
 
 exit 
 
-;---------------------------------------------------------------------- 
-; 
-; Cancel keyboard input if GUI is closed. 
-; 
-GuiClose: 
-    guiActive := 0
-    send, {esc} 
-return 
-
-;---------------------------------------------------------------------- 
-; 
-; Handle mouse click events on the list box 
-; 
-ListBoxClick:    
-    if (A_GuiControlEvent = "Normal"
-        and !GetKeyState("Down", "P") and !GetKeyState("Up", "P"))
-        {
-            send, {enter} 
-        }
-return 
-
-CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
-    
-    winTools := new WinTools()
-    CurrentMonitorIndex := winTools.getCurrentMonitorIndex()	
-    SysGet, MonitorWorkArea, MonitorWorkArea, %CurrentMonitorIndex%
-    
-    monitorWidth := MonitorWorkAreaRight - MonitorWorkAreaLeft
-    monitorHeight := MonitorWorkAreaBottom - MonitorWorkAreaTop
-   
-    spacingHorizontalPx := monitorWidth * (guiSpacingHorizontal / 100)
-    width := monitorWidth - (spacingHorizontalPx * 2) 
-
-    spacingVerticalPx := monitorHeight * (guiSpacingVertical / 100)
-    height := monitorHeight - (spacingVerticalPx * 2)
-    
-    x := MonitorWorkAreaLeft + spacingHorizontalPx
-    y := MonitorWorkAreaTop + spacingVerticalPx
-
-    array := [x, y, width, height]
-    return array
-}

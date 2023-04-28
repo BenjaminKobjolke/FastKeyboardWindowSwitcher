@@ -103,17 +103,65 @@ Default value = 1
 
 ### 27.04.2023 - tray icon support
 
+[trayicons]
+
 Press F1 while the main window is open to switch between listing open windows and tray icons.
 Selecting and item and pressing enter will open the right-click menu of that tray icon.
 Holding down ctrl before pressing enter will open the left-click menu of that tray icon.
 Holding down ctrl and alt before pressing enter will double left-click the tray icon.
 
-setttins.ini
+### 28.04.2023 tab completion works again
+
+tabComplete=1
+
+This feature was broken for a while. Now it works again.
+
+If enabled possible completions are offered when the same unique
+substring is found in the title of more than one window.
+
+For example, the user typed the string "co" and the list is
+narrowed to two windows: "Windows Commander" and "Command Prompt".
+In this case the "command" substring can be completed automatically,
+so the script offers this completion in square brackets which the
+user can accept with the TAB key: co[mmand]
+
+# setttins.ini
+
 [trayicons]
-; when the iswitch window opens it goes back to showing the tasks instead of the tray icons
 alwaystartwithtasks=1
+when the iswitch window opens it goes back to showing the tasks instead of the tray icons
 
 #### Description
 
 If the window first opens and you starting typing, the window list will not be updated until this min length is reached.
 This improves the performance. Otherwise the input lags and it might miss the first character you type.
+
+# original comments
+
+iswitchw - Incrementally switch between windows using substrings
+;
+[MODIFIED by ezuk, 3 July 2008, changes noted below. Cosmetics only.]
+
+Required AutoHotkey version: 1.0.25+
+
+When this script is triggered via its hotkey the list of titles of
+all visible windows appears. The list can be narrowed quickly to a
+particular window by typing a substring of a window title.
+
+When the list is narrowed the desired window can be selected using
+the cursor keys and Enter. If the substring matches exactly one
+window that window is activated immediately (configurable, see the
+"autoactivateifonlyone" variable).
+
+The window selection can be cancelled with Esc.
+
+The switcher window can be moved horizontally with the left/right
+arrow keys if it blocks the view of windows under it.
+
+The switcher can also be operated with the mouse, although it is
+meant to be used from the keyboard. A mouse click activates the
+currently selected window. Mouse users may want to change the
+activation key to one of the mouse keys.
+
+For the idea of this script the credit goes to the creators of the
+iswitchb package for the Emacs editor

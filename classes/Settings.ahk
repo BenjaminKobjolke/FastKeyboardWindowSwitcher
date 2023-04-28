@@ -107,6 +107,10 @@ class Settings {
         return this.getBool("settings", "showProcessName", 1)
     }
 
+    tabComplete() {
+        return this.getBool("settings", "tabComplete", 1)
+    }
+
     /*
     *   set this to yes to enable digit shortcuts when there are ten or 
     *   less items in the list 
