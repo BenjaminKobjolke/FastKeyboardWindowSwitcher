@@ -17,8 +17,14 @@ if (command == "exit")
 	ExitApp
 }
 
-#Include %A_ScriptDir%\classes\Window.ahk
+#Include %A_ScriptDir%\classes\WindowObject.ahk
 #Include %A_ScriptDir%\classes\Windows.ahk
+#Include %A_ScriptDir%\classes\WindowHistory.ahk
+#Include %A_ScriptDir%\includes\inc_objectdump.ahk
+
+;#Include, %A_ScriptDir%/github_modules/AutoHotkey-JSON/AutoHotkey-JSON/Jxon.ahk
+#Include %A_ScriptDir%\node_modules\json.ahk\export.ahk
+
 
 #Include, %A_ScriptDir%/libraries/tray_lib.ahk
 #Include, %A_ScriptDir%/autohotkey_libraries/WinTools.ahk
@@ -33,6 +39,11 @@ trayControl := new TrayControl()
 
 #Include %A_ScriptDir%\classes\Settings.ahk
 S := new Settings()
+
+
+windowHistory := new WindowHistory()
+
+;windowHistory.list()
 
 filteredWindows := new Windows()
 allWindows := new Windows()
@@ -214,7 +225,9 @@ if shortcutslist <>
 
 windowIsOpen := 0
 
+
 #Include %A_ScriptDir%\includes\inc_gui.ahk
+
 
 return
 
@@ -398,7 +411,8 @@ RefreshWindowList:
     filteredWindows.clear()
 
     if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
-    {          
+    {         
+         
         allWindows.clear()   
         forceWindowListRefresh := 0
 
@@ -421,7 +435,7 @@ RefreshWindowList:
             {               
                 StringTrimRight, this_id, id%a_index%, 0 
                 WinGetTitle, title, ahk_id %this_id% 
-
+                ;M sgBox, %title%
                 hwnd := id%A_Index%    
                 desktopNum := 0        
                 if S.useVirtualDesktops() = 1 
@@ -433,7 +447,7 @@ RefreshWindowList:
                     }
                     if desktopNum = 2
                     {
-                        ;MsgBox, %title% >%desktopNum%<
+                        ;M sgBox, %title% >%desktopNum%<
                         ;continue
                     }
                     
@@ -460,8 +474,8 @@ RefreshWindowList:
                         else 
                             ifinstring, title, %filter% 
                             { 
-                            filtered = yes 
-                            break 
+                                filtered = yes 
+                                break 
                             } 
                     } 
 
@@ -485,22 +499,30 @@ RefreshWindowList:
                         stringleft, procname, procname, %pos% 
                     } 
                 
-                } 
-               
-                ;MsgBox, %title%
+                }
+                ;MsgBox, %title% %procname% 
                 allWindows.addNew(this_id, title, procname, desktopNum)           
             }             
         }       
     } 
 
+    allWindowsAndHistory := new Windows()
+    allWindowsAndHistory.addArray(allWindows.getArray())
 
-    amount := allWindows.length()
+    allWindowsAndHistory.sort()
+    amount := allWindowsAndHistory.length()
+
+    windowHistory.sort()
+
+    allWindowsAndHistory.addUniqueArray(windowHistory.getArray())
+
+    amount := allWindowsAndHistory.length()
 
     Loop, %amount% 
     { 
-        window := allWindows.get(A_Index)
+        window := allWindowsAndHistory.get(A_Index)
         title := window.getTitle()
-        ;MsgBox, title %title%
+        ;M sgBox, title %title%
         if search <> 
             if firstlettermatch = 
             { 
@@ -541,7 +563,8 @@ RefreshWindowList:
                 if match = 
                     continue    ; no match 
             } 
-        ;MsgBox, %title%
+        isRunning := window.isRunning()
+        ;M sgBox, %title% -- %isHistory%
         filteredWindows.add(window)
     } 
 
@@ -551,7 +574,7 @@ RefreshWindowList:
         noWindowsFound := true
         filteredWindows.addNew(0, "No windows found", "", 0)
     }
-    ;MsgBox, %amount%
+    ;M sgBox, %amount%
     selectedIndex := 1
     ; if the pattern didn't match any window 
     if amount = 0 
@@ -575,9 +598,9 @@ RefreshWindowList:
     LV_Delete()  
 
     currentDesktop := VD.getCurrentDesktopNum()    
-
-    filteredWindows.sort()
     
+    ;filteredWindows.sort()
+
     if S.useVirtualDesktops() = 1
     { 
         filteredWindows.filterByDesktop(currentDesktop)
@@ -585,12 +608,12 @@ RefreshWindowList:
 
     amount := filteredWindows.length()
     counter := 1
-    ;MsgBox, > %amount%
+    ;M sgBox, > %amount%
     Loop %amount%
     {
         window := filteredWindows.get(A_Index)
         title := window.getTitle()   
-        ;MsgBox, %title%    
+        ;M sgBox, %title%    
         counter := 3
         process_name := ""
         if(S.showProcessName()) {
@@ -631,7 +654,11 @@ RefreshWindowList:
                 CLV.Row(A_Index, , S.virtualDesktopOtherDesktopsTextColor())
             }
         } else {
-            CLV.Row(A_Index, , S.guiTextColor())            
+            if(!window.getIsRunning()) {
+                CLV.Row(A_Index, , S.guiTextColorHistory())
+            } else {
+                CLV.Row(A_Index, , S.guiTextColor())
+            }          
         }
         counter++  
     }
@@ -701,7 +728,7 @@ CheckCompletion:
                 substr = %search%%completion% 
                 stringlen, substr_len, substr 
                 stringgetpos, pos, title, %substr% 
-                ;MsgBox, %pos% %substr% %title%
+                ;M sgBox, %pos% %substr% %title%
                 if pos = -1 
                 {                   
                     break 
@@ -722,7 +749,7 @@ CheckCompletion:
                 pos += 1 
                 stringmid, nextchar, title, %pos%, 1 
                 substr = %substr%%nextchar%
-                ;MsgBox, %substr% 
+                ;M sgBox, %substr% 
             } 
             else 
             { 
@@ -817,9 +844,15 @@ return
         if(showTrayIcons = 1) {
             ;trayControl.remove(winid)
         } else {
+            if(!window.getIsRunning()) {
+                return
+            }
             WinClose, ahk_id %winid% 
+            LV_Delete(selectedIndex)
+            forceWindowListRefresh = 1
+            GoSub, RefreshWindowList  
         }
-        LV_Delete(selectedIndex)        
+             
     return
 #If
 
@@ -845,6 +878,15 @@ return
         GoSub UpdateStatusBar
         GoSub RefreshWindowList
     return
+
+    F2::  
+        if(selectedIndex < 1) {
+            return
+        }
+        window := filteredWindows.get(selectedIndex)
+        windowHistory.add(window)
+
+    return
 #If
 
 ;---------------------------------------------------------------------- 
@@ -860,8 +902,15 @@ ActivateWindow:
 
     window := filteredWindows.get(selectedIndex)
     title := window.getTitle()
-    ;MsgBox, %title%
-    window_id := window.getHwnd() 
+    window_id := window.getHwnd()
+    ;M sgBox, %title% %isHistory% %window_id%
+    if(!window.getIsRunning()) {
+        filePath := window.getFilePath()
+        ;MsgBox, %filePath%
+        Run, %filePath%
+    }
+    ;M sgBox, %title%
+     
     if(window_id = 0) {
         Gui, Submit    
         guiActive := 0 

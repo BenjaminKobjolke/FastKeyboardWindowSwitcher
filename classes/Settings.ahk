@@ -36,6 +36,10 @@ class Settings {
         return this.getString("gui", "textColor", "0x33C4FF")
     }
 
+    guiTextColorHistory() {
+        return this.getString("gui", "textColorHistory", "0x999999")
+    }
+
     guiTextColorTrayIcons() {
         return this.getString("trayicons", "textColor", "0x33C4FF")
     }

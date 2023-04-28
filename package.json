@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "biga.ahk": "^0.56.0"
+    "biga.ahk": "^0.56.0",
+    "json.ahk": "^0.1.0"
   }
 }
