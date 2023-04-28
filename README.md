@@ -108,6 +108,11 @@ Selecting and item and pressing enter will open the right-click menu of that tra
 Holding down ctrl before pressing enter will open the left-click menu of that tray icon.
 Holding down ctrl and alt before pressing enter will double left-click the tray icon.
 
+setttins.ini
+[trayicons]
+; when the iswitch window opens it goes back to showing the tasks instead of the tray icons
+alwaystartwithtasks=1
+
 #### Description
 
 If the window first opens and you starting typing, the window list will not be updated until this min length is reached.

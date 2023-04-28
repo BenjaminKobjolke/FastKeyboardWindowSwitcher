@@ -1,7 +1,6 @@
-﻿;@Ahk2Exe-SetMainIcon icon.ico
+﻿#Requires AutoHotkey v1.1
+;@Ahk2Exe-SetMainIcon icon.ico
 ;@Ahk2Exe-ExeName %A_ScriptDir%\bin\iswitch.exe
-
-;https://autohotkey.com/board/topic/30487-iswitchw-cosmetically-enhanced-edition/page-3
 
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
@@ -28,6 +27,9 @@ A := new biga()
 
 #Include %A_ScriptDir%\classes\TrayControl.ahk
 trayControl := new TrayControl()
+
+#Include %A_ScriptDir%\classes\Settings.ahk
+S := new Settings()
 
 
 ;-------------------------------------------------------------------------------
@@ -87,42 +89,13 @@ If Not A_IsAdmin {
 ; User configuration 
 ; 
 
-IniRead, hotkeyReload, settings.ini, debug, hotkeyReload , 0
-
-DEFAULT_GUI_SPACING_HORIZONTAL := 20
-DEFAULT_GUI_SPACING_VERTICAL := 20
-IniRead, guiSpacingHorizontal, settings.ini, gui, spacingHorizontal , %DEFAULT_GUI_SPACING_HORIZONTAL%
-IniRead, guiSpacingVertical, settings.ini, gui, spacingVertical , %DEFAULT_GUI_SPACING_VERTICAL%
-IniRead, guiShowHeader, settings.ini, gui, showheader , 
-IniRead, guiTextColor, settings.ini, gui, textColor , 33C4FF
-
-IniRead, guiTextColor, settings.ini, gui, textColor , 33C4FF
-IniRead, guiTextColorInput, settings.ini, gui, textColorInput , FFFFFF
-IniRead, guiTextSize, settings.ini, gui, textSize , 20
-IniRead, guiTransparency, settings.ini, gui, transparency , 180
-
-IniRead, useVirtualDesktops, settings.ini, virtualdesktops, enable , 
-IniRead, guiVirtualDesktopOtherTextColor, settings.ini, gui, otherDesktopsTextColor , 0x006868
-IniRead, guiVirtualDesktopAllDesktopsTextColor, settings.ini, gui, allDesktopsTextColor , 0x333333
-
-; set this to yes if you want to select the only matching window 
-; automatically 
-IniRead, autoactivateifonlyone, settings.ini, settings, autoactivateifonlyone , 1
-IniRead, usedeltoendtask, settings.ini, settings, usedeltoendtask , 0
-
-IniRead, showInput, settings.ini, settings, showinput, 0 
-
-IniRead, searchMinLength, settings.ini, settings, searchminlength, 1 
+autoActivateIfOnlyOne := S.autoActivateIfOnlyOne()
 
 sortedElementsArray := Array()
 guiActive := 0
 ; set this to yes if you want to enable tab completion (see above) 
 ; it has no effect if firstlettermatch (see below) is enabled 
 tabcompletion = yes
-
-; set this to yes to enable digit shortcuts when there are ten or 
-; less items in the list 
-digitshortcuts = yes
 
 ; set this to yes to enable first letter match mode where the typed 
 ; search string must match the first letter of words in the 
@@ -148,8 +121,6 @@ activateselectioninbg =
 ; without delay 
 bgactivationdelay = 300 
 
-; show process name before window title. 
-showprocessname = 
 
 ; Close switcher window if the user activates an other window. 
 ; It does not work well if activateselectioninbg is enabled, so 
@@ -162,7 +133,7 @@ showTrayIcons := 0
 
 forceWindowListRefresh := 0
 
-if useVirtualDesktops = 1
+if S.useVirtualDesktops() = 1
 {
     DetectHiddenWindows On
     #Include, %A_ScriptDir%/github_modules/VD.ahk/_VD.ahk
@@ -199,7 +170,7 @@ FileRead, shortcutslist, shortcutslist.txt
 ; listbox is updated. This is usually not necessary and it is an overhead which 
 ; slows down the update of the listbox, so this feature is disabled by default. 
 dynamicwindowlist = 
-if useVirtualDesktops = 1
+if S.useVirtualDesktops() = 1
 {
     dynamicwindowlist = yes
 }
@@ -240,6 +211,7 @@ if nomatchsound <>
 ; 
 ;---------------------------------------------------------------------- 
 allwinDesktopIndex := Array()
+allwinProcessName := Array()
 
 if (!a_iscompiled) {
 	Menu, tray, icon, icon.ico,0,1
@@ -302,20 +274,17 @@ GoSub, SetupGui
 
 return
 
-#If hotkeyReload = 1
-    if(!A_IsCompiled) {    
-        if(hotkeyReload = 1) {
-            #y::
-                
-                Send ^s
-                reload
-            return     
-        }	
+#If S.hotkeyReload()
+    if(!A_IsCompiled) {            
+        #y::                
+            Send ^s
+            reload
+        return             
     }
 #If
 
 /*
-#If useVirtualDesktops = 1
+#If S.useVirtualDesktops() = 1
     !F1::VD.goToDesktopNum(1)
     !F2::VD.goToDesktopNum(2)
     +F1::VD.MoveWindowToDesktopNum("A", 1)
@@ -357,33 +326,38 @@ return
 SetupGui:
     Gui, +LastFound +AlwaysOnTop -Caption   
     Gui, Color, black,black
-    WinSet, Transparent, %guiTransparency%
+    WinSet, Transparent, % S.guiTransparency()
     
     Gui,Font,s14 c%guiTextColor% bold,Calibri
     Gui, Add, StatusBar,  vMyStatusBar  -Theme BackgroundSilver
     GoSub, UpdateStatusBar
     
-
-    Gui,Font,s%guiTextSize% c%guiTextColor% bold,Calibri
+    textSize := S.guiTextSize()
+    textColor := S.guiTextColor()
+    Gui,Font,s%textSize% c%textColor% bold,Calibri
 
     ;WS_EX_CLIENTEDGE = E0x200 removes the border
     ;Gui, Add, ListBox, vindex gListBoxClick x2 y2 -E0x200 AltSubmit -VScroll
     columns = Name
-    if useVirtualDesktops = 1
+    if S.showProcessName()
+    {
+        columns := columns . "|Process"
+    }
+    if S.useVirtualDesktops() 
     {
         columns := columns . "|Desktop"
     }
-
     
-    if showInput = 1
+    if S.showInput()
     {
-        Gui,Font,s%guiTextSize% c%guiTextColorInput% bold,Calibri
+        textColorInput := S.guiTextColorInput()
+        Gui,Font,s%textSize% c%textColorInput% bold,Calibri
         Gui, Add, Text, vInputText, 
-        Gui,Font,s%guiTextSize% c%guiTextColor% bold,Calibri
+        Gui,Font,s%textSize% c%textColor% bold,Calibri
     }    
 
-    Gui, Add, ListView, vindexListView gMyListView hwndHLV x20 y20 -E0x200 AltSubmit -VScroll  -Multi  -WantF2  -Hdr NoSort NoSortHdr -E0x200, %columns%
-    if guiShowHeader = 1
+    Gui, Add, ListView, vindexListView gMyListView hwndHLV x20 y20 -E0x200 AltSubmit -VScroll -HScroll -Multi -WantF2 -Hdr NoSort NoSortHdr 0x2000 -E0x200, %columns%
+    if S.guiShowHeader()
     {
         GuiControl, +Hdr, indexListView
     }
@@ -392,10 +366,8 @@ SetupGui:
 
 return
 
-
-
-MyListView:    
-    
+MyListView:  
+    ToolTip, %A_GuiEvent%      
     if (A_GuiEvent = "DoubleClick")
     {
         LV_GetText(RowText, A_EventInfo)
@@ -408,12 +380,11 @@ MyListView:
     
 return
 
-
-
 CloseGui:
     guiActive := 0
     Gui, cancel 
 
+    SetTimer,CheckIfGuiStillActive, Off
     ; restore the originally active window if 
     ; activateselectioninbg is enabled 
     if activateselectioninbg <> 
@@ -421,12 +392,16 @@ CloseGui:
 
 return
 
-
-HotkeyAction:
-
+HotkeyAction:    
     search = 
     numallwin = 0 
-    
+    if(S.alwaysStartWithTasks())  {
+        if(showTrayIcons = 1) {
+            forceWindowListRefresh = 1
+            showTrayIcons = 0
+        }        
+    }
+
     GuiControl,, Edit1 
     GuiControl,, InputText 
     GoSub, RefreshWindowList 
@@ -434,24 +409,30 @@ HotkeyAction:
     WinGet, orig_active_id, ID, A 
     prev_active_id = %orig_active_id%
 
-    dimensions := CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical)
+    dimensions := CalculateWindowDimensions(S.guiSpacingHorizontal(), S.guiSpacingVertical())
     if(dimensions[3] <= 0 && dimensions[4] <= 0) {
-        dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, DEFAULT_GUI_SPACING_VERTICAL)
+        dimensions := CalculateWindowDimensions(S.defaultGuiSpacingHorizontal(), S.defaultGuiSpacingVertical())
     } else if(dimensions[3] <= 0 ) {
-        dimensions := CalculateWindowDimensions(DEFAULT_GUI_SPACING_HORIZONTAL, guiSpacingVertical)
+        dimensions := CalculateWindowDimensions(S.defaultGuiSpacingHorizontal(), S.guiSpacingVertical())
     } else if(dimensions[4] <= 0 ) {
-        dimensions := CalculateWindowDimensions(guiSpacingHorizontal, DEFAULT_GUI_SPACING_VERTICAL)
+        dimensions := CalculateWindowDimensions(S.guiSpacingHorizontal(), S.defaultGuiSpacingVertical())
     }
 
     x := dimensions[1]
     y := dimensions[2]
-    width := dimensions[3]
+    width := dimensions[3] 
     height := dimensions[4]
-
+    ;M sgBox, %x% %y% %width% %height%
     inputTextX := 28
 
-    desktopColumnWith := 0
-    if useVirtualDesktops = 1
+    processColumnWidth := 0
+    if S.showProcessName()
+    {
+        processColumnWidth := width * 0.2
+    }
+
+    desktopColumnWidth := 0
+    if S.useVirtualDesktops()
     {
         desktopColumnWidth := width * 0.2
     }
@@ -462,23 +443,33 @@ HotkeyAction:
     listWidth := width - 10
     listHeight := height - 10 - statusBarHeight
     litViewY := 0
-    if showInput = 1
+    if S.showInput()
     {
         listHeight := listHeight - 50
         litViewY := 50
     }
 
     
-    column1Width := listWidth - desktopColumnWidth
-
+    column1Width := listWidth - processColumnWidth - desktopColumnWidth
+    ;MsgBox, 1 %listWidth% 2 %column1Width% 3 %processColumnWidth% 4 %desktopColumnWidth %
+    ;MsgBox, %column1Width%
     LV_ModifyCol(1, column1Width)
-    if useVirtualDesktops = 1
+    counter := 2
+     if S.showProcessName()
     {   
-        LV_ModifyCol(2, desktopColumnWidth)
+        LV_ModifyCol(counter, processColumnWidth)
+        counter := counter + 1
+    }     
+    if S.useVirtualDesktops()
+    {   
+        LV_ModifyCol(counter, desktopColumnWidth)
     }    
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
     Gui, Show, % "x" x " y" y " w" width " h" height iSwitch      
+    gui_id := WinExist("A")
+    SetTimer, CheckIfGuiStillActive, 500
+    ;MsgBox, %gui_id%
     guiActive := 1
     
     WinSet, Redraw, , ahk_id %HLV%
@@ -495,14 +486,9 @@ HotkeyAction:
     ;WinSet, AlwaysOnTop, On, ahk_id %switcher_id% 
 
     Loop 
-    { 
-        if closeifinactivated <> 
-            settimer, CloseIfInactive, 200 
-
+    {
+  
         Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
-
-        if closeifinactivated <> 
-            settimer, CloseIfInactive, off 
 
         if ErrorLevel = EndKey:enter 
         { 
@@ -560,25 +546,11 @@ HotkeyAction:
             continue 
         } 
 
-        if ErrorLevel = EndKey:left 
-        { 
-            direction = -1 
-            GoSuB MoveSwitcher 
-            continue 
-        } 
-
-        if ErrorLevel = EndKey:right 
-        { 
-            direction = 1 
-            GoSuB MoveSwitcher 
-            continue 
-        } 
-
         ; FIXME: probably other error level cases 
         ; should be handled here (interruption?) 
 
         ; invoke digit shortcuts if applicable 
-        if digitshortcuts <> 
+        if S.digitShortcuts() <> 
             if numwin <= 10 
                 if input in 1,2,3,4,5,6,7,8,9,0 
                 { 
@@ -632,6 +604,15 @@ HotkeyAction:
 
 return 
 
+CheckIfGuiStillActive:
+    id := WinActive("A")
+    
+    if(id <> gui_id)
+    {
+        GoSub, CloseGui
+    }
+return
+
 ;---------------------------------------------------------------------- 
 ; 
 ; Refresh the list of windows according to the search criteria 
@@ -647,7 +628,8 @@ RefreshWindowList:
         forceWindowListRefresh := 0
         numallwin = 0 
         allwinDesktopIndex := Array()
-
+        allwinProcessName := Array()
+        
         counter := 0
         if(showTrayIcons = 1) {            
             trayIcons := trayControl.list()
@@ -673,7 +655,7 @@ RefreshWindowList:
 
                 hwnd := id%A_Index%    
                 desktopNum := 0        
-                if useVirtualDesktops = 1 
+                if S.useVirtualDesktops() = 1 
                 {                
                     desktopNum := VD.getDesktopNumOfWindow("ahk_id" hwnd)
                     If (desktopNum < 0) ;-1 for invalid window, 0 for "Show on all desktops", 1 for Desktop 1
@@ -696,20 +678,7 @@ RefreshWindowList:
                 if switcher_id = %this_id% 
                     continue 
 
-                ; show process name if enabled 
-                if showprocessname <> 
-                { 
-                    WinGet, procname, ProcessName, ahk_id %this_id% 
 
-                    stringgetpos, pos, procname, . 
-                    if ErrorLevel <> 1 
-                    { 
-                        stringleft, procname, procname, %pos% 
-                    } 
-
-                    stringupper, procname, procname 
-                    title = %procname%: %title% 
-                } 
 
                 ; don't add titles which match any of the filters 
                 if filterlist <> 
@@ -741,8 +710,24 @@ RefreshWindowList:
                 allwinarray%numallwin% = %title% 
                 allwinidarray%numallwin% = %this_id% 
 
+                ; show process name if enabled 
+                if S.showProcessName()
+                { 
+                    WinGet, procname, ProcessName, ahk_id %this_id% 
+
+                    stringgetpos, pos, procname, . 
+                    if ErrorLevel <> 1 
+                    { 
+                        stringleft, procname, procname, %pos% 
+                    } 
+                    
+                    ;stringupper, procname, procname 
+                    ;title = %procname%: %title% 
+                    allwinProcessName[numallwin] := procname
+                } 
+               
                 
-                if useVirtualDesktops = 1
+                if S.useVirtualDesktops() = 1
                 {                
                     allwinDesktopIndex[numallwin] := desktopNum
                 }            
@@ -752,14 +737,15 @@ RefreshWindowList:
 
     ; filter the window list according to the search criteria 
 
-    winlist = 
+    elementsArray := Array()
+    
     numwin = 0     
     Loop, %numallwin% 
     { 
         StringTrimRight, title, allwinarray%a_index%, 0 
         StringTrimRight, this_id, allwinidarray%a_index%, 0 
-        this_desktop := allwinDesktopIndex[a_index]
-        
+        this_process_name := allwinProcessName[a_index] 
+        this_desktop := allwinDesktopIndex[a_index]        
         ; don't add the windows not matching the search string 
         ; if there is a search string 
         if search <> 
@@ -803,13 +789,19 @@ RefreshWindowList:
                     continue    ; no match 
             } 
 
-        if winlist <> 
-            winlist = %winlist%| 
-        winlist = %winlist%%title%`r%this_id%`r%this_desktop%
-
+        newEntry = %title%`r%this_id%`r%this_process_name%`r%this_desktop%
+        
+        winArray := StrSplit(newEntry, "`r") 
+        elementsArray.Push(winArray)
+        
+        if title = 
+            MsgBox, %newEntry%
+        
         numwin += 1 
-        winarray%numwin% = %title% 
+        ;winarray%numwin% = %title% 
     } 
+    
+    ;MsgBox, %winlist%
     
     selectedIndex := 1
     ; if the pattern didn't match any window 
@@ -830,29 +822,19 @@ RefreshWindowList:
             return 
         } 
 
-    ;T oolTip, %winlist%
-    arrayindex = 1 
     
     LV_Delete()  
     
     sortedElementsArray := Array()
-    elementsArray := Array()
+
     idArray := Array()
-    
-    loop, parse, winlist, | 
-    { 
-        ;MsgBox, %A_LoopField%
-        winArray := StrSplit(A_LoopField, "`r")         
-        elementsArray.Push(winArray)
-        ++arrayindex 
-    } 
     
     elementsArray := A.sortBy(elementsArray, 3)
 
     currentDesktop := VD.getCurrentDesktopNum()    
-    numItems := arrayindex -1    
+    numItems := numwin    
     
-    if useVirtualDesktops = 1
+    if S.useVirtualDesktops() = 1
     { 
         Loop %numItems%
         {
@@ -882,9 +864,16 @@ RefreshWindowList:
     counter := 1
     Loop %numItems%
     {
-        desktop := sortedElementsArray[A_Index][3]             
         title := sortedElementsArray[A_Index][1]        
         win_id := sortedElementsArray[A_Index][2]
+        counter := 3
+        if(S.showProcessName()) {
+            process_name := sortedElementsArray[A_Index][counter]
+            counter := counter + 1
+        }
+        if(S.useVirtualDesktops()) {
+            desktop := sortedElementsArray[A_Index][counter]  
+        }
 
         if digitshortcuts <> 
         {
@@ -897,31 +886,35 @@ RefreshWindowList:
         if(desktop = 0) {
             desktopText = pinned
         }
-        ;MsgBox, %A_Index% %title% %desktop%
-        LV_Add("", title, desktopText)  
+        LV_Add("", title, process_name, desktopText)  
         ;LV_Insert(, , title, desktop)  
         idArray.Push(win_id)    
-
-        if useVirtualDesktops = 1
+        
+        if(showTrayIcons = 1) {            
+            CLV.Row(A_Index, , S.guiTextColorTrayIcons())            
+        } else if S.useVirtualDesktops() = 1
         { 
             if(desktop = currentDesktop) 
             {
-                CLV.Row(A_Index, , %guiTextColor%)
+                CLV.Row(A_Index, , S.guiTextColor())
             }
             else if(desktop = 0) 
             {                
-                CLV.Row(A_Index, , guiVirtualDesktopAllDesktopsTextColor)
+                CLV.Row(A_Index, , S.virtualDesktopAllDesktopsTextColor())
             }            
             else
             {
-                CLV.Row(A_Index, , guiVirtualDesktopOtherDesktopsTextColor)
+                CLV.Row(A_Index, , S.virtualDesktopOtherDesktopsTextColor())
             }
+        } else {
+            CLV.Row(A_Index, , S.guiTextColor())            
         }
         counter++  
     }
 
+
     if numwin = 1 
-        if autoactivateifonlyone = 1 
+        if autoActivateIfOnlyOne 
         { 
             if showTrayIcons = 0
             {
@@ -1026,7 +1019,6 @@ return
 ; Delete last search char and update the window list 
 ; 
 DeleteSearchChar: 
-
     if search = 
         return 
 
@@ -1037,20 +1029,20 @@ DeleteSearchChar:
 
 return 
 
-#If guiActive = 1 and useVirtualDesktops = 1
-    F1::  
+#If guiActive = 1 and S.useVirtualDesktops() = 1
+    F2::  
         winid := sortedElementsArray[selectedIndex][2]        
         VD.MoveWindowToDesktopNum("ahk_id" winid,1)          
         title := sortedElementsArray[selectedIndex][1]        
         LV_Modify(selectedIndex,, title, 1)
     return
-    F2::  
+    F3::  
         winid := sortedElementsArray[selectedIndex][2]        
         VD.MoveWindowToDesktopNum("ahk_id" winid,2)          
         title := sortedElementsArray[selectedIndex][1]        
         LV_Modify(selectedIndex,, title, 2)
     return
-    F3::  
+    F4::  
         winid := sortedElementsArray[selectedIndex][2]        
         VD.MoveWindowToDesktopNum("ahk_id" winid,3)          
         title := sortedElementsArray[selectedIndex][1]        
@@ -1070,7 +1062,7 @@ return
     return
 #If
 
-#If guiActive = 1 and usedeltoendtask = 1
+#If guiActive = 1 and S.useDelToEndTask()
     DEL::        
         winid := sortedElementsArray[selectedIndex][2]        
         WinClose, ahk_id %winid% 
@@ -1080,11 +1072,10 @@ return
 
 #If guiActive = 1
     F9::
-  
-        if(autoactivateifonlyone = 1) {
-            autoactivateifonlyone = 0            
+        if(autoActivateIfOnlyOne) {
+           autoActivateIfOnlyOne := false        
         } else {
-            autoactivateifonlyone = 1            
+            autoActivateIfOnlyOne := true          
         }
         GoSub UpdateStatusBar
     return
@@ -1112,7 +1103,7 @@ UpdateStatusBar:
         newText = Listing windows
     }   
 
-    if(autoactivateifonlyone = 1) {
+    if(autoActivateIfOnlyOne) {
         if(showTrayIcons = 1) {
             newText = %newText% | Auto activate not supported for tray icons  
         } else {
@@ -1122,13 +1113,13 @@ UpdateStatusBar:
         newText = %newText% | Auto activate disabled
     }   
     
-    if(useVirtualDesktops = 1) {
+    if(S.useVirtualDesktops() = 1) {
         newText = %newText% | Virtual Desktops enabled
     } else {
         newText = %newText% | Virtual Desktops disabled
     }
 
-    if(usedeltoendtask = 1) {
+    if(S.useDelToEndTask()) {
         if(showTrayIcons = 1) {
             newText = %newText% | Kill tasks with DEL not supported for tray icons  
         } else {
@@ -1286,67 +1277,6 @@ ListBoxClick:
             send, {enter} 
         }
 return 
-
-;---------------------------------------------------------------------- 
-; 
-; Move switcher window horizontally 
-; 
-; Input: direction - 1 for right, -1 for left 
-; 
-MoveSwitcher: 
-
-    direction *= 100 
-    WinGetPos, x, y, width, , ahk_id %switcher_id% 
-    x += %direction% 
-
-    if x < 0 
-        x = 0 
-    else 
-    { 
-    SysGet screensize, MonitorWorkArea 
-    screensizeRight -= %width% 
-    if x > %screensizeRight% 
-        x = %screensizeRight% 
-    } 
-
-    prevdelay = %A_WinDelay%  
-    SetWinDelay, -1 
-    WinMove, ahk_id %switcher_id%, , %x%, %y% 
-    SetWinDelay, %prevdelay% 
-
-return 
-
-;---------------------------------------------------------------------- 
-; 
-; Close the switcher window if the user activated an other window 
-; 
-CloseIfInactive: 
-
-    ifwinnotactive, ahk_id %switcher_id% 
-        guiActive := 0
-        send, {esc} 
-
-return
-
-CoordXCenterScreen(WidthOfGUI,ScreenNumber)
-{
-SysGet, Mon1, Monitor, %ScreenNumber%
-	return (( Mon1Right-Mon1Left - WidthOfGUI ) / 2) + Mon1Left
-}
-
-CoordYCenterScreen(HeightofGUI,ScreenNumber)
-{
-SysGet, Mon1, Monitor, %ScreenNumber%
-	return (Mon1Bottom - 30 - HeightofGUI ) / 2
-}
-
-GetClientSize(hwnd, ByRef w, ByRef h)
-{
-    VarSetCapacity(rc, 16)
-    DllCall("GetClientRect", "uint", hwnd, "uint", &rc)
-    w := NumGet(rc, 8, "int")
-    h := NumGet(rc, 12, "int")
-}
 
 CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
     
