@@ -17,6 +17,9 @@ if (command == "exit")
 	ExitApp
 }
 
+#Include %A_ScriptDir%\classes\Window.ahk
+#Include %A_ScriptDir%\classes\Windows.ahk
+
 #Include, %A_ScriptDir%/libraries/tray_lib.ahk
 #Include, %A_ScriptDir%/autohotkey_libraries/WinTools.ahk
 #Include, %A_ScriptDir%/github_modules/Class_LV_Colors/Sources/Class_LV_Colors.ahk
@@ -30,6 +33,9 @@ trayControl := new TrayControl()
 
 #Include %A_ScriptDir%\classes\Settings.ahk
 S := new Settings()
+
+W := new Windows()
+allWindows := new Windows()
 
 If Not A_IsAdmin {
 	Run, *RunAs %A_ScriptFullPath% ; Requires v1.0.92.01+
@@ -55,7 +61,7 @@ guiActive := 0
 ;  AutoHotkey - Documentation 
 ;  Anne's Diary 
 ; 
-firstlettermatch = 0
+firstlettermatch = 
 
 ; set this to yes to enable activating the currently selected 
 ; window in the background 
@@ -387,24 +393,15 @@ HotkeyAction:
 return 
 
 
-;---------------------------------------------------------------------- 
-; 
-; Refresh the list of windows according to the search criteria 
-; 
-; Sets: numwin  - see the documentation of global variables 
-;       idarray - see the documentation of global variables 
-; 
 RefreshWindowList: 
     ; refresh the list of windows if necessary 
-    
+    W.clear()
+
     if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
-    {             
+    {          
+        allWindows.clear()   
         forceWindowListRefresh := 0
-        numallwin = 0 
-        allwinDesktopIndex := Array()
-        allwinProcessName := Array()
-        
-        counter := 0
+
         if(showTrayIcons = 1) {            
             trayIcons := trayControl.list()
             numallwin := trayControl.Length()
@@ -415,10 +412,8 @@ RefreshWindowList:
                 ; replace pipe (|) characters in the window title, 
                 ; because Gui Add uses it for separating listbox items 
                 StringReplace, title, title, |, -, all  
-                
-                counter += 1 
-                allwinarray%counter% = %title% 
-                allwinidarray%counter% = %this_id%   
+                allWindows.addNew(this_id, title, 0,0)
+
             }
         } else {
             WinGet, id, list, , , Program Manager 
@@ -478,9 +473,6 @@ RefreshWindowList:
                 ; because Gui Add uses it for separating listbox items 
                 StringReplace, title, title, |, -, all 
                 
-                numallwin += 1 
-                allwinarray%numallwin% = %title% 
-                allwinidarray%numallwin% = %this_id% 
 
                 ; show process name if enabled 
                 if S.showProcessName()
@@ -492,34 +484,23 @@ RefreshWindowList:
                     { 
                         stringleft, procname, procname, %pos% 
                     } 
-                    
-                    ;stringupper, procname, procname 
-                    ;title = %procname%: %title% 
-                    allwinProcessName[numallwin] := procname
+                
                 } 
                
-                
-                if S.useVirtualDesktops() = 1
-                {                
-                    allwinDesktopIndex[numallwin] := desktopNum
-                }            
+                ;MsgBox, %title%
+                allWindows.addNew(this_id, title, procname, desktopNum)           
             }             
         }       
     } 
 
-    ; filter the window list according to the search criteria 
 
-    elementsArray := Array()
-    
-    numwin = 0     
-    Loop, %numallwin% 
+    amount := allWindows.length()
+
+    Loop, %amount% 
     { 
-        StringTrimRight, title, allwinarray%a_index%, 0 
-        StringTrimRight, this_id, allwinidarray%a_index%, 0 
-        this_process_name := allwinProcessName[a_index] 
-        this_desktop := allwinDesktopIndex[a_index]        
-        ; don't add the windows not matching the search string 
-        ; if there is a search string 
+        window := allWindows.get(A_Index)
+        title := window.getTitle()
+        ;MsgBox, title %title%
         if search <> 
             if firstlettermatch = 
             { 
@@ -560,25 +541,15 @@ RefreshWindowList:
                 if match = 
                     continue    ; no match 
             } 
-
-        ;newEntry = %title%`r%this_id%`r%this_process_name%`r%this_desktop%
-        newEntry := Array()
-        newEntry.Push(title)
-        newEntry.Push(this_id)
-        newEntry.Push(this_process_name)
-        newEntry.Push(this_desktop)
-
-        elementsArray.Push(newEntry)
-
-        numwin += 1 
-        ;winarray%numwin% = %title% 
+        ;MsgBox, %title%
+        W.add(window)
     } 
-    
-    ;MsgBox, %winlist%
-    
+
+    amount := W.length()
+    ;MsgBox, %amount%
     selectedIndex := 1
     ; if the pattern didn't match any window 
-    if numwin = 0 
+    if amount = 0 
         ; if the search string is empty then we can't do much 
         if search = 
         { 
@@ -597,55 +568,31 @@ RefreshWindowList:
 
     
     LV_Delete()  
-    
-    sortedElementsArray := Array()
-
-    idArray := Array()
-    
-    elementsArray := A.sortBy(elementsArray, 3)
 
     currentDesktop := VD.getCurrentDesktopNum()    
-    numItems := numwin    
+
+    W.sort()
     
     if S.useVirtualDesktops() = 1
     { 
-        Loop %numItems%
-        {
-            desktop := elementsArray[A_Index][3]
-            if(desktop != currentDesktop) 
-            {
-                continue
-            }
-            sortedElementsArray.Push(elementsArray[A_Index])
-        }
-        
-        Loop %numItems%
-        {
-            desktop := elementsArray[A_Index][3]
-            if(desktop = currentDesktop) 
-            {
-                continue
-            }
-            sortedElementsArray.Push(elementsArray[A_Index])
-        }
-    } else {
-        sortedElementsArray := elementsArray
-    }
-    
+        W.filterByDesktop(currentDesktop)
+    }   
 
-
+    amount := W.length()
     counter := 1
-    Loop %numItems%
+    ;MsgBox, > %amount%
+    Loop %amount%
     {
-        title := sortedElementsArray[A_Index][1]        
-        win_id := sortedElementsArray[A_Index][2]
+        window := W.get(A_Index)
+        title := window.getTitle()   
+        ;MsgBox, %title%    
         counter := 3
+        process_name := ""
         if(S.showProcessName()) {
-            process_name := sortedElementsArray[A_Index][counter]
-            counter := counter + 1
+            process_name := window.getProcessName()
         }
         if(S.useVirtualDesktops()) {
-            desktop := sortedElementsArray[A_Index][counter]  
+            desktop := window.getDesktop()
         }
 
         if digitshortcuts <> 
@@ -660,8 +607,7 @@ RefreshWindowList:
             desktopText = pinned
         }
         LV_Add("", title, process_name, desktopText)  
-        ;LV_Insert(, , title, desktop)  
-        idArray.Push(win_id)    
+  
         
         if(showTrayIcons = 1) {            
             CLV.Row(A_Index, , S.guiTextColorTrayIcons())            
@@ -686,7 +632,7 @@ RefreshWindowList:
     }
 
 
-    if numwin = 1 
+    if amount = 1 
         if autoActivateIfOnlyOne 
         { 
             if showTrayIcons = 0
@@ -706,14 +652,14 @@ RefreshWindowList:
             }
         } 
 
-    GoSub ActivateWindowInBackgroundIfEnabled 
+    GoSub, ActivateWindowInBackgroundIfEnabled 
     GoSub, CheckCompletion
 
 return 
 
 CheckCompletion:
 
-    if(S.tabComplete() = false) {
+    if(S.tabComplete()) {
         return
     }
     completion = 
@@ -729,16 +675,18 @@ CheckCompletion:
     if search = 
         return 
 
-    if numwin = 1 
+    amount := W.length()
+    if amount = 1 
         return 
 
     loop 
     { 
         nextchar = 
 
-        loop, %numwin% 
+        loop, %amount% 
         { 
-            title := sortedElementsArray[A_Index][1]
+            window := W.get(A_Index)
+            title := window.getTitle()
 
             if nextchar = 
             {
@@ -886,12 +834,15 @@ return
 ; Activate selected window 
 ; 
 ActivateWindow:
+
     winTools := new WinTools()
     if(showTrayIcons) {                      
         winTools.moveMouseToCurrentWindowCenter()    
     }
 
-    window_id := idArray[selectedIndex]   
+    window := W.get(selectedIndex)
+
+    window_id := window.getHwnd() 
     
 
     if(showTrayIcons) {            
@@ -949,7 +900,8 @@ return
 ; 
 ActivateWindowInBackground:           
     guicontrolget, index,, ListView1 
-    stringtrimleft, window_id, idarray%index%, 0 
+    window := W.get(index)
+    window_id := window.getHwnd()
 
     if prev_active_id <> %window_id% 
     { 
