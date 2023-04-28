@@ -34,7 +34,7 @@ trayControl := new TrayControl()
 #Include %A_ScriptDir%\classes\Settings.ahk
 S := new Settings()
 
-W := new Windows()
+filteredWindows := new Windows()
 allWindows := new Windows()
 
 If Not A_IsAdmin {
@@ -395,7 +395,7 @@ return
 
 RefreshWindowList: 
     ; refresh the list of windows if necessary 
-    W.clear()
+    filteredWindows.clear()
 
     if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
     {          
@@ -542,14 +542,14 @@ RefreshWindowList:
                     continue    ; no match 
             } 
         ;MsgBox, %title%
-        W.add(window)
+        filteredWindows.add(window)
     } 
 
     noWindowsFound := false
-    amount := W.length()
+    amount := filteredWindows.length()
     if(amount < 1) {
         noWindowsFound := true
-        W.addNew(0, "No windows found", "", 0)
+        filteredWindows.addNew(0, "No windows found", "", 0)
     }
     ;MsgBox, %amount%
     selectedIndex := 1
@@ -576,19 +576,19 @@ RefreshWindowList:
 
     currentDesktop := VD.getCurrentDesktopNum()    
 
-    W.sort()
+    filteredWindows.sort()
     
     if S.useVirtualDesktops() = 1
     { 
-        W.filterByDesktop(currentDesktop)
+        filteredWindows.filterByDesktop(currentDesktop)
     }   
 
-    amount := W.length()
+    amount := filteredWindows.length()
     counter := 1
     ;MsgBox, > %amount%
     Loop %amount%
     {
-        window := W.get(A_Index)
+        window := filteredWindows.get(A_Index)
         title := window.getTitle()   
         ;MsgBox, %title%    
         counter := 3
@@ -683,7 +683,7 @@ CheckCompletion:
     if search = 
         return 
 
-    amount := W.length()
+    amount := filteredWindows.length()
     if amount = 1 
         return 
 
@@ -693,7 +693,7 @@ CheckCompletion:
 
         loop, %amount% 
         { 
-            window := W.get(A_Index)
+            window := filteredWindows.get(A_Index)
             title := window.getTitle()
 
             if nextchar = 
@@ -774,28 +774,28 @@ return
 
 #If guiActive = 1 and S.useVirtualDesktops() = 1
     F2::  
-        window := W.get(selectedIndex)
+        window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,1)          
         LV_Modify(selectedIndex,, title, 1)
     return
     F3::  
-        window := W.get(selectedIndex)
+        window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,2)          
         LV_Modify(selectedIndex,, title, 2)
     return
     F4::  
-        window := W.get(selectedIndex)
+        window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,3)          
         LV_Modify(selectedIndex,, title, 3)
     return    
     F10::
-        window := W.get(selectedIndex)
+        window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()   
         title := window.getTitle()
         VD.TogglePinWindow("ahk_id" winid)  
@@ -812,7 +812,7 @@ return
 
 #If guiActive = 1 and S.useDelToEndTask()
     DEL::        
-        window := W.get(selectedIndex)
+        window := filteredWindows.get(selectedIndex)
         winid := window.getHwnd()  
         if(showTrayIcons = 1) {
             ;trayControl.remove(winid)
@@ -858,7 +858,7 @@ ActivateWindow:
         winTools.moveMouseToCurrentWindowCenter()    
     }
 
-    window := W.get(selectedIndex)
+    window := filteredWindows.get(selectedIndex)
     title := window.getTitle()
     ;MsgBox, %title%
     window_id := window.getHwnd() 
@@ -931,7 +931,7 @@ return
 ; 
 ActivateWindowInBackground:           
     guicontrolget, index,, ListView1 
-    window := W.get(index)
+    window := filteredWindows.get(index)
     window_id := window.getHwnd()
 
     if prev_active_id <> %window_id% 
