@@ -27,24 +27,39 @@ class TrayControl {
         this.click(windId, "R", false)
     }
 
-    click(windId, command = "L", doubleClick = false) {        
+    get(hwnd) {
         maxIndex := this.trayArray.MaxIndex()
         targetIndex := 0
+
         Loop, %maxIndex%
         {
-            hwnd := this.trayArray[A_Index].hwnd            
-            if(windId = hwnd) {
+            currentHwnd := this.trayArray[A_Index].hwnd   
+        
+            if(hwnd = currentHwnd) {
                 targetIndex := A_Index
                 break
             }
-        }        
-        name := this.trayArray[targetIndex].process
-        msgid := this.trayArray[targetIndex].msgid
-        hwnd := this.trayArray[targetIndex].hwnd
-        uid := this.trayArray[targetIndex].uid
+        } 
+        
+        element := this.trayArray[targetIndex]
+        element.index := targetIndex
+        return element
+    }
+
+    click(windId, command = "L", doubleClick = false) {        
+        element := this.get(windId)
+
         ;M sgBox, %index% %name% %msgid% %hwnd% uid %uid%
         
-        TrayIcon_Click(msgid, uid, hwnd, command, doubleClick)
+        TrayIcon_Click(element.msgid, element.uid, element.hwnd, command, doubleClick)
+    }
+
+    ; not working
+    remove(hwnd) {
+
+        element := this.get(hwnd)
+        ;MsgBox, % element.index
+        ;TrayIcon_Hide(element.index, "Shell_TrayWnd", False)
     }
 
 }

@@ -545,7 +545,12 @@ RefreshWindowList:
         W.add(window)
     } 
 
+    noWindowsFound := false
     amount := W.length()
+    if(amount < 1) {
+        noWindowsFound := true
+        W.addNew(0, "No windows found", "", 0)
+    }
     ;MsgBox, %amount%
     selectedIndex := 1
     ; if the pattern didn't match any window 
@@ -631,6 +636,9 @@ RefreshWindowList:
         counter++  
     }
 
+    if(noWindowsFound) {
+      return
+    } 
 
     if amount = 1 
         if autoActivateIfOnlyOne 
@@ -766,32 +774,37 @@ return
 
 #If guiActive = 1 and S.useVirtualDesktops() = 1
     F2::  
-        winid := sortedElementsArray[selectedIndex][2]        
+        window := W.get(selectedIndex)
+        winid := window.getHwnd()   
+        title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,1)          
-        title := sortedElementsArray[selectedIndex][1]        
         LV_Modify(selectedIndex,, title, 1)
     return
     F3::  
-        winid := sortedElementsArray[selectedIndex][2]        
+        window := W.get(selectedIndex)
+        winid := window.getHwnd()   
+        title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,2)          
-        title := sortedElementsArray[selectedIndex][1]        
         LV_Modify(selectedIndex,, title, 2)
     return
     F4::  
-        winid := sortedElementsArray[selectedIndex][2]        
+        window := W.get(selectedIndex)
+        winid := window.getHwnd()   
+        title := window.getTitle()
         VD.MoveWindowToDesktopNum("ahk_id" winid,3)          
-        title := sortedElementsArray[selectedIndex][1]        
         LV_Modify(selectedIndex,, title, 3)
     return    
     F10::
-        winid := sortedElementsArray[selectedIndex][2]     
+        window := W.get(selectedIndex)
+        winid := window.getHwnd()   
+        title := window.getTitle()
         VD.TogglePinWindow("ahk_id" winid)  
-        title := sortedElementsArray[selectedIndex][1]        
+            
         desktopNum := VD.getDesktopNumOfWindow("ahk_id" winid)      
         desktopText := desktopNum     
         if(desktopNum = 0) 
         {
-        desktopText = pinned
+            desktopText = pinned
         }
         LV_Modify(selectedIndex,, title, desktopText)        
     return
@@ -799,8 +812,13 @@ return
 
 #If guiActive = 1 and S.useDelToEndTask()
     DEL::        
-        winid := sortedElementsArray[selectedIndex][2]        
-        WinClose, ahk_id %winid% 
+        window := W.get(selectedIndex)
+        winid := window.getHwnd()  
+        if(showTrayIcons = 1) {
+            ;trayControl.remove(winid)
+        } else {
+            WinClose, ahk_id %winid% 
+        }
         LV_Delete(selectedIndex)        
     return
 #If
@@ -841,9 +859,14 @@ ActivateWindow:
     }
 
     window := W.get(selectedIndex)
-
+    title := window.getTitle()
+    ;MsgBox, %title%
     window_id := window.getHwnd() 
-    
+    if(window_id = 0) {
+        Gui, Submit    
+        guiActive := 0 
+        return
+    }
 
     if(showTrayIcons) {            
         GetKeyState, state, Ctrl
@@ -859,10 +882,18 @@ ActivateWindow:
             trayControl.rightClick(window_id)       
         }
         
-        Sleep, 200
+        Sleep, 100
         Gui, Submit    
         guiActive := 0 
-        
+        /*
+        WinGet, ID, List
+        Loop %ID%
+        {
+            WinActivate, ahk_id  ID%A_Index%
+            winTools.moveMouseToCurrentWindowCenter() 
+            break
+        }
+        */
         return
     }
 
