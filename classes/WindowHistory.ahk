@@ -41,6 +41,26 @@ class WindowHistory {
         this.setup()
     }
 
+    hasWindow(window) {
+        windowArray := this.windows.getArray()
+        amount := windowArray.MaxIndex()
+        ;MsgBox, % "Checking if window exists " . amount
+        Loop, %amount%
+        {
+            currentWindow := windowArray[A_Index]
+            
+            if(currentWindow.getProcessName() != window.getProcessName()) {
+                continue
+            }
+            if(currentWindow.getFilePath() != window.getFilePath()) {
+                continue
+            }
+            return true
+        }
+        return false
+    
+    }
+
     getArray() {
         return this.windows.getArray()
     }

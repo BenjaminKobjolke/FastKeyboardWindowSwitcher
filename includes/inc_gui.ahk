@@ -14,14 +14,11 @@ SetupGui:
     ;WS_EX_CLIENTEDGE = E0x200 removes the border
     ;Gui, Add, ListBox, vindex gListBoxClick x2 y2 -E0x200 AltSubmit -VScroll
     columns = Name
-    if S.showProcessName()
-    {
-        columns := columns . "|Process"
-    }
-    if S.useVirtualDesktops() 
-    {
-        columns := columns . "|Desktop"
-    }
+    columns := columns . "|Process"
+    
+    columns := columns . "|Desktop"
+    
+    columns := columns . "|Pinned"
     
     if S.showInput()
     {
@@ -109,6 +106,12 @@ UpdateStatusBar:
     } else {
         newText = %newText% | Kill tasks with DEL disabled
     }    
+
+    if(showTrayIcons = 1) {
+        newText = %newText% | Pin tasks with F2 not supported for tray icons  
+    } else {
+        newText = %newText% | Pin / unpin tasks with F2 
+    }    
     SB_SetText(newText, 1)
 return
 
@@ -152,7 +155,7 @@ CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
 }
 
 UpdateGui:
-GuiControl,, Edit1 
+    GuiControl,, Edit1 
     GuiControl,, InputText 
     GoSub, RefreshWindowList 
 
@@ -187,6 +190,8 @@ GuiControl,, Edit1
         desktopColumnWidth := width * 0.2
     }
 
+    statusColumnWidth := 150
+
     ;M sgbox, % "x" x " y" y " w" width " h" height 
     
     statusBarHeight := 50
@@ -200,20 +205,18 @@ GuiControl,, Edit1
     }
 
     
-    column1Width := listWidth - processColumnWidth - desktopColumnWidth
+    column1Width := listWidth - processColumnWidth - desktopColumnWidth - statusColumnWidth
     ;MsgBox, 1 %listWidth% 2 %column1Width% 3 %processColumnWidth% 4 %desktopColumnWidth %
     ;MsgBox, %column1Width%
     LV_ModifyCol(1, column1Width)
     counter := 2
-     if S.showProcessName()
-    {   
-        LV_ModifyCol(counter, processColumnWidth)
-        counter := counter + 1
-    }     
-    if S.useVirtualDesktops()
-    {   
-        LV_ModifyCol(counter, desktopColumnWidth)
-    }    
+    LV_ModifyCol(counter, processColumnWidth)
+    counter := counter + 1
+
+    LV_ModifyCol(counter, desktopColumnWidth)
+    counter := counter + 1
+
+    LV_ModifyCol(counter, statusColumnWidth)
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
     Gui, Show, % "x" x " y" y " w" width " h" height iSwitch      

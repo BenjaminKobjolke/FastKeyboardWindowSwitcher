@@ -125,7 +125,9 @@ In this case the "command" substring can be completed automatically,
 so the script offers this completion in square brackets which the
 user can accept with the TAB key: co[mmand]
 
-### 29.04.2023 - move mouse support
+### 29.04.2023
+
+#### move mouse
 
 [mouse]
 
@@ -137,6 +139,17 @@ this will move the mouse to the active window center
 
 this will store the mouse position before moving it to the active window center
 the next time you activate that window it will restore the mouse position
+
+#### pin windows
+
+Pressing F2 on any entry of the list will pin the entry.
+This means the entry will show up in the list even if its not running.
+It will show at the bottom of the list in grey color.
+Activating on of those grey entries while the task is not running will launch the task.
+If the task is already running it will show in the regular list and will not be shown in grey at the bottom.
+All pinned tasks have a "P" in the column on the left end of the list.
+
+<hr>
 
 # setttins.ini
 

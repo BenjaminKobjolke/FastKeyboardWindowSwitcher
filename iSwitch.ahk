@@ -47,6 +47,7 @@ windowHistory := new WindowHistory()
 
 filteredWindows := new WindowManager()
 allWindows := new WindowManager()
+allTrayWindows := new WindowManager()
 
 If Not A_IsAdmin {
 	Run, *RunAs %A_ScriptFullPath% ; Requires v1.0.92.01+
@@ -413,7 +414,7 @@ return
 RefreshWindowList: 
     ; refresh the list of windows if necessary 
     filteredWindows.clear()
-
+    allTrayWindows.clear()
     if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
     {         
         ;allWindows.clear()   
@@ -429,7 +430,7 @@ RefreshWindowList:
                 ; replace pipe (|) characters in the window title, 
                 ; because Gui Add uses it for separating listbox items 
                 StringReplace, title, title, |, -, all  
-                allWindows.addNew(this_id, title, 0,0)
+                allTrayWindows.addNew(this_id, title, 0,0)
 
             }
         } else {
@@ -508,16 +509,23 @@ RefreshWindowList:
             }             
         }       
     } 
-    allWindows.removeNonExistent()
+    
     allWindowsAndHistory := new WindowManager()
-    allWindowsAndHistory.addArray(allWindows.getArray())
+    if(showTrayIcons = 1) {       
+        allWindowsAndHistory.addArray(allTrayWindows.getArray())
+    } else {
+        allWindows.removeNonExistent()
 
-    allWindowsAndHistory.sort()
-    amount := allWindowsAndHistory.length()
+        allWindowsAndHistory.addArray(allWindows.getArray())
 
-    windowHistory.sort()
+        allWindowsAndHistory.sort()
+        amount := allWindowsAndHistory.length()
 
-    allWindowsAndHistory.addUniqueArray(windowHistory.getArray())
+        windowHistory.sort()
+
+        allWindowsAndHistory.addUniqueArray(windowHistory.getArray())
+    }
+   
 
     amount := allWindowsAndHistory.length()
 
@@ -637,7 +645,15 @@ RefreshWindowList:
         if(desktop = 0) {
             desktopText = pinned
         }
-        LV_Add("", title, process_name, desktopText)  
+
+        pinned := ""
+        if(allWindows.hasWindow(window)) {
+            if(windowHistory.hasWindow(window)) {
+                pinned := "P"
+            }       
+        }
+        
+        LV_Add("", title, process_name, desktopText, pinned)  
   
         
         if(showTrayIcons = 1) {            
@@ -696,7 +712,6 @@ RefreshWindowList:
 return 
 
 CheckCompletion:
-
     if(S.tabComplete()) {
         return
     }
@@ -842,11 +857,13 @@ return
 
 #If guiActive = 1 and S.useDelToEndTask()
     DEL::        
-        window := filteredWindows.get(selectedIndex)
-        winid := window.getHwnd()  
-        if(showTrayIcons = 1) {
+       if(showTrayIcons = 1) {
             ;trayControl.remove(winid)
+            return
         } else {
+            window := filteredWindows.get(selectedIndex)
+            winid := window.getHwnd()  
+        
             if(!window.getIsRunning()) {
                 return
             }
@@ -891,6 +908,8 @@ return
         } 
         window := filteredWindows.get(selectedIndex)
         windowHistory.add(window)
+        forceWindowListRefresh = 1
+        GoSub RefreshWindowList
     return
 #If
 
@@ -899,9 +918,9 @@ return
 ; Activate selected window 
 ; 
 ActivateWindow:
-    Gui, Submit    
-    guiActive := 0 
+    window := filteredWindows.get(selectedIndex)
     if(showTrayIcons) {     
+        window_id := window.getHwnd()
         if(S.moveMouse()) {               
             winTools := new WinTools()
             winTools.moveMouseToCurrentWindowCenter()               
@@ -933,13 +952,16 @@ ActivateWindow:
         */
         return
     }
+    
+    Gui, Submit    
+    guiActive := 0 
 
     if(S.saveMousePos()) {
         allWindows.storeMousePosForActiveWindow(lastActiveWindowId)
         filteredWindows.storeMousePosForActiveWindow(lastActiveWindowId)
     }
 
-    window := filteredWindows.get(selectedIndex)
+
     title := window.getTitle()
     ;M sgBox, %title%
     activateStatus := window.activate(S.moveMouse(), S.saveMousePos())
