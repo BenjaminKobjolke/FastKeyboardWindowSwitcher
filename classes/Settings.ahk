@@ -20,6 +20,14 @@ class Settings {
         return this.DEFAULT_GUI_SPACING_VERTICAL        
     }
 
+    moveMouse() {
+        return this.getBool("mouse", "move", 1)
+    }
+
+    saveMousePos() {
+        return this.getBool("mouse", "saveposperwindow", 1)
+    }
+
     guiSpacingHorizontal() {        
         return this.getString("gui", "spacingHorizontal", this.DEFAULT_GUI_SPACING_HORIZONTAL)
     }

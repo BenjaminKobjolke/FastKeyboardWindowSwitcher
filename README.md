@@ -125,6 +125,19 @@ In this case the "command" substring can be completed automatically,
 so the script offers this completion in square brackets which the
 user can accept with the TAB key: co[mmand]
 
+### 29.04.2023 - move mouse support
+
+[mouse]
+
+`movemouse=1`
+
+this will move the mouse to the active window center
+
+`saveposperwindow=1`
+
+this will store the mouse position before moving it to the active window center
+the next time you activate that window it will restore the mouse position
+
 # setttins.ini
 
 [trayicons]

@@ -7,7 +7,7 @@ class WindowHistory {
     }
 
     setup() {
-        this.windows := new Windows()    
+        this.windows := new WindowManager()    
         FileCreateDir, %A_ScriptDir%/history    
         FileRead, str, %A_ScriptDir%\history\history.json
         ;M sgBox, %str%
@@ -45,7 +45,7 @@ class WindowHistory {
         return this.windows.getArray()
     }
 
-    sort() {
+    sort() {    
         this.windows.sort()
     }
 

@@ -18,7 +18,7 @@ if (command == "exit")
 }
 
 #Include %A_ScriptDir%\classes\WindowObject.ahk
-#Include %A_ScriptDir%\classes\Windows.ahk
+#Include %A_ScriptDir%\classes\WindowManager.ahk
 #Include %A_ScriptDir%\classes\WindowHistory.ahk
 #Include %A_ScriptDir%\includes\inc_objectdump.ahk
 
@@ -45,8 +45,8 @@ windowHistory := new WindowHistory()
 
 ;windowHistory.list()
 
-filteredWindows := new Windows()
-allWindows := new Windows()
+filteredWindows := new WindowManager()
+allWindows := new WindowManager()
 
 If Not A_IsAdmin {
 	Run, *RunAs %A_ScriptFullPath% ; Requires v1.0.92.01+
@@ -98,6 +98,8 @@ selectedIndex := 1
 showTrayIcons := 0
 
 forceWindowListRefresh := 0
+
+lastActiveWindowId := 0
 
 if S.useVirtualDesktops() = 1
 {
@@ -284,11 +286,13 @@ HotkeyAction:
             showTrayIcons = 0
         }        
     }
+    WinGet, lastActiveWindowId, ID, A
 
     GoSub, UpdateGui
 
     Loop 
     {  
+
         Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
 
         if ErrorLevel = EndKey:enter 
@@ -412,8 +416,7 @@ RefreshWindowList:
 
     if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
     {         
-         
-        allWindows.clear()   
+        ;allWindows.clear()   
         forceWindowListRefresh := 0
 
         if(showTrayIcons = 1) {            
@@ -500,13 +503,13 @@ RefreshWindowList:
                     } 
                 
                 }
-                ;MsgBox, %title% %procname% 
-                allWindows.addNew(this_id, title, procname, desktopNum)           
+                ;M sgBox, %title% %procname% 
+                allWindows.addIfNotExists(this_id, title, procname, desktopNum)           
             }             
         }       
     } 
-
-    allWindowsAndHistory := new Windows()
+    allWindows.removeNonExistent()
+    allWindowsAndHistory := new WindowManager()
     allWindowsAndHistory.addArray(allWindows.getArray())
 
     allWindowsAndHistory.sort()
@@ -896,30 +899,13 @@ return
 ; Activate selected window 
 ; 
 ActivateWindow:
-
-    winTools := new WinTools()
-    if(showTrayIcons) {                      
-        winTools.moveMouseToCurrentWindowCenter()    
-    }
-
-    window := filteredWindows.get(selectedIndex)
-    title := window.getTitle()
-    window_id := window.getHwnd()
-    ;M sgBox, %title% %isHistory% %window_id%
-    if(!window.getIsRunning()) {
-        filePath := window.getFilePath()
-        ;MsgBox, %filePath%
-        Run, %filePath%
-    }
-    ;M sgBox, %title%
-     
-    if(window_id = 0) {
-        Gui, Submit    
-        guiActive := 0 
-        return
-    }
-
-    if(showTrayIcons) {            
+    Gui, Submit    
+    guiActive := 0 
+    if(showTrayIcons) {     
+        if(S.moveMouse()) {               
+            winTools := new WinTools()
+            winTools.moveMouseToCurrentWindowCenter()               
+        }
         GetKeyState, state, Ctrl
         if (state = "D") {
             GetKeyState, state, Alt
@@ -948,33 +934,25 @@ ActivateWindow:
         return
     }
 
-    Gui, Submit    
-    guiActive := 0 
-    
-    WinActivate, ahk_id %window_id% 
+    if(S.saveMousePos()) {
+        allWindows.storeMousePosForActiveWindow(lastActiveWindowId)
+        filteredWindows.storeMousePosForActiveWindow(lastActiveWindowId)
+    }
 
-    GetKeyState, state, Alt
-    if (state = "D") {
-        guiActive := 0
-        WinClose, ahk_id %window_id%
+    window := filteredWindows.get(selectedIndex)
+    title := window.getTitle()
+    ;M sgBox, %title%
+    activateStatus := window.activate(S.moveMouse(), S.saveMousePos())
+
+    if(activateStatus = 1) {   
+        Gui, Submit    
+        guiActive := 0 
         return
-    } 
-
-    winTools.moveMouseToCurrentWindowCenter()    
-    /*
-    GetKeyState, state, Ctrl
-    if (state = "D") {
-        Send, ^!m
-        
-    } 
-    */
-
-
-    ;T ooltip winTopL_x:%winTopL_x% winTopL_y:%winTopL_y% winCenter_x:%winCenter_x% winCenter_y:%winCenter_y%    
-    
+    } else {
+        forceWindowListRefresh = 1
+        GoSub, HotkeyAction
+    }
 return 
-
-
 
 ;---------------------------------------------------------------------- 
 ; 
