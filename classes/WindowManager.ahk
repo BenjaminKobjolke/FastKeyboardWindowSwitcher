@@ -226,9 +226,8 @@ class WindowManager {
             window := this.windows[A_Index]
             ;M sgBox, % "Checking window " . window.getHwnd() . " " . lastActiveWindowId
             if(window.getHwnd() = lastActiveWindowId) {
-                title := window.getTitle()
-
-                ;M sgBox, found window %title%
+                ;title := window.getTitle()
+                ;MsgBox, found window %title%
                 return window
             }
         }
@@ -238,9 +237,9 @@ class WindowManager {
 
     storeMousePosForActiveWindow(lastActiveWindowId) {
         window := this.getActiveWindow(lastActiveWindowId)
-        title := window.getTitle()
+        ;title := window.getTitle()
 
-        ToolTip, >%title%<
+        ;ToolTip, >%title%<
         window.saveMousePos()
     }
 
