@@ -149,6 +149,10 @@ Activating on of those grey entries while the task is not running will launch th
 If the task is already running it will show in the regular list and will not be shown in grey at the bottom.
 All pinned tasks have a "P" in the column on the left end of the list.
 
+### 02.05.2023
+
+Reload the window list with ctrl+r
+
 <hr>
 
 # setttins.ini

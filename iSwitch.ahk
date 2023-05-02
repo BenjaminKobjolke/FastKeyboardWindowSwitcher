@@ -877,6 +877,10 @@ return
 #If
 
 #If guiActive = 1
+    ^r::
+        forceWindowListRefresh = 1
+        GoSub, RefreshWindowList 
+    return
     F9::
         if(autoActivateIfOnlyOne) {
            autoActivateIfOnlyOne := false        
