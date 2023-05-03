@@ -414,7 +414,6 @@ return
 RefreshWindowList: 
     ; refresh the list of windows if necessary 
     filteredWindows.clear()
-    allTrayWindows.clear()
     if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
     {         
         ;allWindows.clear()   
@@ -424,6 +423,7 @@ RefreshWindowList:
             trayIcons := trayControl.list()
             numallwin := trayControl.Length()
             
+            allTrayWindows.clear()
             Loop, % numallwin {
                 title := trayIcons[A_Index].process
                 this_id := trayIcons[A_Index].hwnd
@@ -513,6 +513,9 @@ RefreshWindowList:
     allWindowsAndHistory := new WindowManager()
     if(showTrayIcons = 1) {       
         allWindowsAndHistory.addArray(allTrayWindows.getArray())
+        allWindowsAndHistory.sort()
+        amount := allWindowsAndHistory.length()
+        ToolTip, %amount% windows
     } else {
         allWindows.removeNonExistent()
 
