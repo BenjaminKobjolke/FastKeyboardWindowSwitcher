@@ -514,8 +514,6 @@ RefreshWindowList:
     if(showTrayIcons = 1) {       
         allWindowsAndHistory.addArray(allTrayWindows.getArray())
         allWindowsAndHistory.sort()
-        amount := allWindowsAndHistory.length()
-        ToolTip, %amount% windows
     } else {
         allWindows.removeNonExistent()
 
