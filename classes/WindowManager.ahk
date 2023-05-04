@@ -84,10 +84,10 @@ class WindowManager {
         ;M sgBox, the title is %title% --> do it!
         
         w := new WindowObject(hwnd, title, processName, desktop, filePath, isRunning)
-        if(this.hasWindow(w)) {            
+        if(this.hasWindow(w, 1)) {            
             return false
         }
-        this.windows.push(w)
+        this.add(w)
         return true         
     }
 
@@ -100,7 +100,7 @@ class WindowManager {
         return true         
     }
 
-    hasWindow(window) {
+    hasWindow(window, checkTitle := 0) {
         amount := this.windows.MaxIndex()
         ;MsgBox, % "Checking if window exists " . amount
         Loop, %amount%
@@ -115,12 +115,39 @@ class WindowManager {
             if(currentWindow.getHwnd() != window.getHwnd()) {
                 continue
             }
+
+            if(checkTitle = 1) {
+                if(currentWindow.getTitle() != window.getTitle()) {
+                    continue
+                }
+            }
             return true
         }
         return false
     }
 
+    removeWindow(window) {
+        amount := this.windows.MaxIndex()
+        Loop, %amount%
+        {
+            currentWindow := this.windows[A_Index]
+            if(currentWindow.getProcessName() != window.getProcessName()) {
+                continue
+            }
+            if(currentWindow.getHwnd() != window.getHwnd()) {
+                continue
+            }
+            this.windows.RemoveAt(A_Index)
+            return
+        }
+    }
+
     add(window) {
+        ; there might be a window with the same hwnd but different title
+        ; so we need to check if it exists first
+        if(this.hasWindow(window)) {
+            this.removeWindow(window)
+        }
         this.windows.push(window)
         ;amount := this.windows.MaxIndex()
         ;M sgBox % "Added existing window " . amount 

@@ -17,6 +17,12 @@ if (command == "exit")
 	ExitApp
 }
 
+
+#Include %A_ScriptDir%\classes\commands\CommandObject.ahk
+#Include %A_ScriptDir%\classes\commands\Commands.ahk
+#Include %A_ScriptDir%\classes\commands\CommandFactory.ahk
+commandList := new Commands()
+
 #Include %A_ScriptDir%\classes\WindowObject.ahk
 #Include %A_ScriptDir%\classes\WindowManager.ahk
 #Include %A_ScriptDir%\classes\WindowHistory.ahk
@@ -96,7 +102,14 @@ closeifinactivated =
 
 selectedIndex := 1
 
-showTrayIcons := 0
+; 0 = all windows
+; 1 = tray icons
+; 2 = command list
+contentTypeAllWindows := 0
+contentTypeTrayIcons := 1
+contentTypeCommands := 2
+contentType := contentTypeAllWindows
+lastContentType := contentTypeAllWindows
 
 forceWindowListRefresh := 0
 
@@ -282,9 +295,9 @@ HotkeyAction:
     search = 
     numallwin = 0 
     if(S.alwaysStartWithTasks())  {
-        if(showTrayIcons = 1) {
+        if(contentType = contentTypeTrayIcons) {
             forceWindowListRefresh = 1
-            showTrayIcons = 0
+            contentType := contentTypeAllWindows
         }        
     }
     WinGet, lastActiveWindowId, ID, A
@@ -401,7 +414,19 @@ HotkeyAction:
         GuiControl,, Edit1, %search% 
         GuiControl,, InputText, %search% 
         length := StrLen(search)
-        if(length > 1)  {
+
+        first_letter := SubStr(search, 1, 1) 
+        if first_letter = :
+        {
+            if(lastContentType != contentTypeCommands) {
+                forceWindowListRefresh := 1
+            }
+            lastContentType := contentType
+            contentType := contentTypeCommands
+            GoSub, RefreshWindowList
+        } else if length > 1  
+        {
+            contentType := lastContentType
             GoSub, RefreshWindowList 
         }
     } 
@@ -418,8 +443,7 @@ RefreshWindowList:
     {         
         ;allWindows.clear()   
         forceWindowListRefresh := 0
-
-        if(showTrayIcons = 1) {            
+        if(contentType = contentTypeTrayIcons) {            
             trayIcons := trayControl.list()
             numallwin := trayControl.Length()
             
@@ -433,6 +457,8 @@ RefreshWindowList:
                 allTrayWindows.addNew(this_id, title, 0,0)
 
             }
+        }  else if(contentType = contentTypeCommands) {            
+           
         } else {
             WinGet, id, list, , , Program Manager 
             Loop, %id% 
@@ -507,13 +533,16 @@ RefreshWindowList:
                 ;M sgBox, %title% %procname% 
                 allWindows.addIfNotExists(this_id, title, procname, desktopNum)           
             }             
-        }       
+        }      
     } 
     
     allWindowsAndHistory := new WindowManager()
-    if(showTrayIcons = 1) {       
+    if(contentType = contentTypeTrayIcons) {       
         allWindowsAndHistory.addArray(allTrayWindows.getArray())
         allWindowsAndHistory.sort()
+    } else if(contentType = contentTypeCommands) {
+        allWindowsAndHistory.addArray(commandList.getArray())
+        ;allWindowsAndHistory.sort()
     } else {
         allWindows.removeNonExistent()
 
@@ -525,59 +554,67 @@ RefreshWindowList:
         windowHistory.sort()
 
         allWindowsAndHistory.addUniqueArray(windowHistory.getArray())
-    }
-   
+    }   
 
     amount := allWindowsAndHistory.length()
 
+    length := StrLen(search)
     Loop, %amount% 
     { 
         window := allWindowsAndHistory.get(A_Index)
         title := window.getTitle()
         ;M sgBox, title %title%
-        if search <> 
-            if firstlettermatch = 
-            { 
-                if title not contains %search%, 
-                    continue 
-            } 
-            else 
-            { 
-                stringlen, search_len, search 
-
-                index = 1 
-                match = 
-
-                loop, parse, title, %A_Space% 
-                {                    
-                    stringleft, first_letter, A_LoopField, 1 
-
-                    ; only words beginning with an alphanumeric 
-                    ; character are taken into account 
-                    if first_letter not in 1,2,3,4,5,6,7,8,9,0,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z 
+        if(length > 1) {
+            searchString := search
+            if(contentType = contentTypeCommands) {
+                searchString := SubStr(search, 1, length)
+            }
+            if searchString <> 
+                
+                if firstlettermatch = 
+                { 
+                    if title not contains %searchString%, 
                         continue 
-
-                    stringmid, search_char, search, %index%, 1 
-
-                    if first_letter <> %search_char% 
-                        break 
-
-                    index += 1 
-
-                    ; no more search characters 
-                    if index > %search_len% 
-                    { 
-                        match = yes 
-                        break 
-                    } 
                 } 
+                else 
+                { 
+                    stringlen, search_len, searchString 
 
-                if match = 
-                    continue    ; no match 
-            } 
-        isRunning := window.isRunning()
-        ;M sgBox, %title% -- %isHistory%
-        filteredWindows.add(window)
+                    index = 1 
+                    match = 
+
+                    loop, parse, title, %A_Space% 
+                    {                    
+                        stringleft, first_letter, A_LoopField, 1 
+                        ; only words beginning with an alphanumeric 
+                        ; character are taken into account 
+                        if first_letter not in 1,2,3,4,5,6,7,8,9,0,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z 
+                            continue 
+
+                        stringmid, search_char, searchString, %index%, 1 
+
+                        if first_letter <> %search_char% 
+                            break 
+
+                        index += 1 
+
+                        ; no more search characters 
+                        if index > %search_len% 
+                        { 
+                            match = yes 
+                            break 
+                        } 
+                    } 
+
+                    if match = 
+                        continue    ; no match 
+                } 
+            ;isRunning := window.isRunning()
+            ;M sgBox, %title% -- %isHistory%
+            filteredWindows.add(window)
+        } else {
+            filteredWindows.add(window)
+        }
     } 
 
     noWindowsFound := false
@@ -657,7 +694,7 @@ RefreshWindowList:
         LV_Add("", title, process_name, desktopText, pinned)  
   
         
-        if(showTrayIcons = 1) {            
+        if(contentType = contentTypeTrayIcons) {            
             CLV.Row(A_Index, , S.guiTextColorTrayIcons())            
         } else if S.useVirtualDesktops() = 1
         { 
@@ -690,7 +727,7 @@ RefreshWindowList:
     if amount = 1 
         if autoActivateIfOnlyOne 
         { 
-            if showTrayIcons = 0
+            if(contentType != contentTypeTrayIcons) 
             {
                 ; only autoactivate if the search string is not empty
                 ; otherwise the gui would close if only one windows is available
@@ -753,7 +790,7 @@ CheckCompletion:
                     break 
                 }
                 pos += %substr_len% 
-                ;ToolTip, %title% %pos%
+                ;T oolTip, %title% %pos%
                 ; if the substring matches the end of the 
                 ; string then no more characters can be completed 
                 stringlen, title_len, title 
@@ -858,7 +895,7 @@ return
 
 #If guiActive = 1 and S.useDelToEndTask()
     DEL::        
-       if(showTrayIcons = 1) {
+       if(contentType != contentTypeAllWindows) {
             ;trayControl.remove(winid)
             return
         } else {
@@ -894,10 +931,10 @@ return
 
 #If guiActive = 1
     F1::  
-        if(showTrayIcons = 1) {
-            showTrayIcons = 0            
+        if(contentType = contentTypeTrayIcons) {
+            contentType := contentTypeAllWindows
         } else {
-            showTrayIcons = 1            
+            contentType := contentTypeTrayIcons
         }
         forceWindowListRefresh = 1      
         GoSub UpdateStatusBar
@@ -908,7 +945,7 @@ return
         if(selectedIndex < 1) {
             return
         }
-        if(showTrayIcons = 1) {
+        if(contentType != contentTypeAllWindows) {
             return
         } 
         window := filteredWindows.get(selectedIndex)
@@ -924,12 +961,12 @@ return
 ; 
 ActivateWindow:
     window := filteredWindows.get(selectedIndex)
-    if(showTrayIcons) {     
+    if(contentType = contentTypeTrayIcons) {     
         window_id := window.getHwnd()
         if(S.moveMouse()) {               
             winTools := new WinTools()
-            winTools.moveMouseToCurrentWindowCenter()               
-        }
+            winTools.moveMouseToCurrentWindowCenter()              
+        }            
         GetKeyState, state, Ctrl
         if (state = "D") {
             GetKeyState, state, Alt
