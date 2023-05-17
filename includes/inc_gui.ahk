@@ -135,6 +135,8 @@ return
 CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
     
     winTools := new WinTools()
+    scale := A_ScreenDPI / 96
+    
     CurrentMonitorIndex := winTools.getCurrentMonitorIndex()	
     SysGet, MonitorWorkArea, MonitorWorkArea, %CurrentMonitorIndex%
     
@@ -143,10 +145,10 @@ CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
    
     spacingHorizontalPx := monitorWidth * (guiSpacingHorizontal / 100)
     width := monitorWidth - (spacingHorizontalPx * 2) 
-
+    width := width / scale
     spacingVerticalPx := monitorHeight * (guiSpacingVertical / 100)
     height := monitorHeight - (spacingVerticalPx * 2)
-    
+    height := height / scale
     x := MonitorWorkAreaLeft + spacingHorizontalPx
     y := MonitorWorkAreaTop + spacingVerticalPx
 
