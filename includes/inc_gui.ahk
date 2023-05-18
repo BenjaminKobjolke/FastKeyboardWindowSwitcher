@@ -47,8 +47,10 @@ MyListView:
     if (A_GuiEvent = "I") 
     {        
         selectedIndex :=  A_EventInfo    
+
     }    
 return
+
 
 CloseGui:
     guiActive := 0

@@ -1,14 +1,5 @@
 ﻿#Requires AutoHotkey v1.1
-;@Ahk2Exe-SetMainIcon icon.ico
-;@Ahk2Exe-ExeName %A_ScriptDir%\bin\iswitch.exe
-
-#NoEnv 
-SendMode Input
-#SingleInstance force
-SetTitleMatchMode, 2
-SetWorkingDir %A_ScriptDir%
-ListLines Off
-SetBatchLines -1
+#Include %A_ScriptDir%\config.ahk
 
 ; close script from another script by sending exit as argument
 command := A_Args[1]
@@ -17,48 +8,23 @@ if (command == "exit")
 	ExitApp
 }
 
-
-#Include %A_ScriptDir%\classes\commands\CommandObject.ahk
-#Include %A_ScriptDir%\classes\commands\Commands.ahk
-#Include %A_ScriptDir%\classes\commands\CommandFactory.ahk
-commandList := new Commands()
-
-#Include %A_ScriptDir%\classes\WindowObject.ahk
-#Include %A_ScriptDir%\classes\WindowManager.ahk
-#Include %A_ScriptDir%\classes\WindowHistory.ahk
-#Include %A_ScriptDir%\includes\inc_objectdump.ahk
-
-;#Include, %A_ScriptDir%/github_modules/AutoHotkey-JSON/AutoHotkey-JSON/Jxon.ahk
-#Include %A_ScriptDir%\node_modules\json.ahk\export.ahk
-
-
-#Include, %A_ScriptDir%/libraries/tray_lib.ahk
-#Include, %A_ScriptDir%/autohotkey_libraries/WinTools.ahk
-#Include, %A_ScriptDir%/github_modules/Class_LV_Colors/Sources/Class_LV_Colors.ahk
-
-#Include %A_ScriptDir%\node_modules
-#Include biga.ahk\export.ahk
-A := new biga()
-
-#Include %A_ScriptDir%\classes\TrayControl.ahk
-trayControl := new TrayControl()
-
-#Include %A_ScriptDir%\classes\Settings.ahk
-S := new Settings()
-
-
-windowHistory := new WindowHistory()
-
-;windowHistory.list()
-
-filteredWindows := new WindowManager()
-allWindows := new WindowManager()
-allTrayWindows := new WindowManager()
-
 If Not A_IsAdmin {
 	Run, *RunAs %A_ScriptFullPath% ; Requires v1.0.92.01+
 	ExitApp
 }
+
+#Include %A_ScriptDir%\includes\includes.ahk
+
+commandList := new Commands()
+A := new biga()
+trayControl := new TrayControl()
+S := new Settings()
+
+windowHistory := new WindowHistory()
+
+filteredWindows := new WindowManager()
+allWindows := new WindowManager()
+allTrayWindows := new WindowManager()
 
 ;---------------------------------------------------------------------- 
 ; 
@@ -122,10 +88,6 @@ if S.useVirtualDesktops() = 1
     dummyFunction1() {
         static dummyStatic1 := VD.init()
     }   
-    
-    ;VD.createUntil(2)
-
-    
 }
 
 if activateselectioninbg <> 
@@ -192,6 +154,9 @@ if nomatchsound <>
 ;                      from the window list 
 ; 
 ;---------------------------------------------------------------------- 
+xdListView := new XDListView()
+xdListView.setup(VD, S, CLV, digiShortcuts)
+
 allwinDesktopIndex := Array()
 allwinProcessName := Array()
 
@@ -426,7 +391,9 @@ HotkeyAction:
             GoSub, RefreshWindowList
         } else if length > 1  
         {
-            contentType := lastContentType
+            if(contentType = contentTypeCommands) {
+                contentType := lastContentType
+            }
             GoSub, RefreshWindowList 
         }
     } 
@@ -519,7 +486,7 @@ RefreshWindowList:
                 
 
                 ; show process name if enabled 
-                if S.showProcessName()
+                if S.showProcessName() || S.addProcessNameToWindowTitle()
                 { 
                     WinGet, procname, ProcessName, ahk_id %this_id% 
 
@@ -528,6 +495,11 @@ RefreshWindowList:
                     { 
                         stringleft, procname, procname, %pos% 
                     } 
+
+                    if S.addProcessNameToTitle()
+                    {
+                        title = %title% (%procname%)
+                    }
                 
                 }
                 ;M sgBox, %title% %procname% 
@@ -535,9 +507,9 @@ RefreshWindowList:
             }             
         }      
     } 
-    
+
     allWindowsAndHistory := new WindowManager()
-    if(contentType = contentTypeTrayIcons) {       
+    if(contentType = contentTypeTrayIcons) {   
         allWindowsAndHistory.addArray(allTrayWindows.getArray())
         allWindowsAndHistory.sort()
     } else if(contentType = contentTypeCommands) {
@@ -567,46 +539,41 @@ RefreshWindowList:
         if(length > 1) {
             searchString := search
             if(contentType = contentTypeCommands) {
+                ;remove the : at the start
                 searchString := SubStr(search, 1, length)
             }
             if searchString <> 
                 
                 if firstlettermatch = 
                 { 
-                    if title not contains %searchString%, 
-                        continue 
+                    if title not contains %searchString%
+                    {
+                        if S.searchInProcessName()
+                        {
+                            procname := window.getProcessName()
+                            if procname not contains %searchString%
+                            {
+                                continue
+                            }
+                        } else {
+                            continue
+                        }
+                    } 
                 } 
                 else 
-                { 
-                    stringlen, search_len, searchString 
+                {
+                    ToolTip, do it
+                    match := matchesSearchString(title, searchString)
+                    match2 := 
+                    if S.searchInProcessName()
+                    {
+                        procname := window.getProcessName()
+                        ToolTip,  %procname%
+                        match2 := matchesSearchString(procname, searchString)
+                
+                    }
 
-                    index = 1 
-                    match = 
-
-                    loop, parse, title, %A_Space% 
-                    {                    
-                        stringleft, first_letter, A_LoopField, 1 
-                        ; only words beginning with an alphanumeric 
-                        ; character are taken into account 
-                        if first_letter not in 1,2,3,4,5,6,7,8,9,0,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z 
-                            continue 
-
-                        stringmid, search_char, searchString, %index%, 1 
-
-                        if first_letter <> %search_char% 
-                            break 
-
-                        index += 1 
-
-                        ; no more search characters 
-                        if index > %search_len% 
-                        { 
-                            match = yes 
-                            break 
-                        } 
-                    } 
-
-                    if match = 
+                    if match = && match2 =
                         continue    ; no match 
                 } 
             ;isRunning := window.isRunning()
@@ -643,82 +610,8 @@ RefreshWindowList:
             return 
         } 
 
-    
-    LV_Delete()  
 
-    currentDesktop := VD.getCurrentDesktopNum()    
-    
-    ;filteredWindows.sort()
-
-    if S.useVirtualDesktops() = 1
-    { 
-        filteredWindows.filterByDesktop(currentDesktop)
-    }   
-
-    amount := filteredWindows.length()
-    counter := 1
-    ;M sgBox, > %amount%
-    Loop %amount%
-    {
-        window := filteredWindows.get(A_Index)
-        title := window.getTitle()   
-        ;M sgBox, %title%    
-        counter := 3
-        process_name := ""
-        if(S.showProcessName()) {
-            process_name := window.getProcessName()
-        }
-        if(S.useVirtualDesktops()) {
-            desktop := window.getDesktop()
-        }
-
-        if digitshortcuts <> 
-        {
-            if numwin < 10 
-            {      
-                title = %counter% %title%
-            }
-        }   
-        desktopText := desktop
-        if(desktop = 0) {
-            desktopText = pinned
-        }
-
-        pinned := ""
-        if(allWindows.hasWindow(window)) {
-            if(windowHistory.hasWindow(window)) {
-                pinned := "P"
-            }       
-        }
-        
-        LV_Add("", title, process_name, desktopText, pinned)  
-  
-        
-        if(contentType = contentTypeTrayIcons) {            
-            CLV.Row(A_Index, , S.guiTextColorTrayIcons())            
-        } else if S.useVirtualDesktops() = 1
-        { 
-            if(desktop = currentDesktop) 
-            {
-                CLV.Row(A_Index, , S.guiTextColor())
-            }
-            else if(desktop = 0) 
-            {                
-                CLV.Row(A_Index, , S.virtualDesktopAllDesktopsTextColor())
-            }            
-            else
-            {
-                CLV.Row(A_Index, , S.virtualDesktopOtherDesktopsTextColor())
-            }
-        } else {
-            if(!window.getIsRunning()) {
-                CLV.Row(A_Index, , S.guiTextColorHistory())
-            } else {
-                CLV.Row(A_Index, , S.guiTextColor())
-            }          
-        }
-        counter++  
-    }
+    xdListView.updateRows(filteredWindows, allWindows, windowHistory, contentType)
 
     if(noWindowsFound) {
       return
@@ -748,6 +641,39 @@ RefreshWindowList:
     GoSub, CheckCompletion
 
 return 
+
+matchesSearchString(string, search) {
+
+    stringlen, search_len, search 
+
+    index = 1 
+    match = 
+
+    loop, parse, string, %A_Space% 
+    {                    
+        stringleft, first_letter, A_LoopField, 1 
+        ; only words beginning with an alphanumeric 
+        ; character are taken into account 
+        if first_letter not in 1,2,3,4,5,6,7,8,9,0,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z 
+            continue 
+
+        stringmid, search_char, search, %index%, 1 
+
+        if first_letter <> %search_char% 
+            break 
+
+        index += 1 
+
+        ; no more search characters 
+        if index > %search_len% 
+        { 
+            match = yes 
+            break 
+        } 
+    } 
+
+    return match 
+}
 
 CheckCompletion:
     if(S.tabComplete()) {
@@ -936,6 +862,7 @@ return
         } else {
             contentType := contentTypeTrayIcons
         }
+        lastContentType := contentType
         forceWindowListRefresh = 1      
         GoSub UpdateStatusBar
         GoSub RefreshWindowList

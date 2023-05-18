@@ -151,14 +151,41 @@ All pinned tasks have a "P" in the column on the left end of the list.
 
 ### 02.05.2023
 
-Reload the window list with ctrl+r
+Reload the window list with
+
+`ctrl+r`
+
+<hr>
+
+### 18.05.2023
+
+_Search in process name_
+
+In settings.ini activate the following setting:
+
+`searchInProcessName=1`
+
+If you then search for example for "explorer" you will find all file explorer windows.
+Even though those windows do not have "explorer" in their title.
+
+Additionally you can add the process name to the window title in the list view:
+
+`addProcessNameToWindowTitle=1`
+
+Alternatively you can add the process name to its own column:
+
+`showProcessName=1`
+
+which is enabled by default.
 
 <hr>
 
 # setttins.ini
 
-[trayicons]
-alwaystartwithtasks=1
+`[trayicons]`
+
+`alwaystartwithtasks=1`
+
 when the iswitch window opens it goes back to showing the tasks instead of the tray icons
 
 #### Description

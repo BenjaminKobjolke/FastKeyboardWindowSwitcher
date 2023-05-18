@@ -115,9 +115,18 @@ class Settings {
         return this._autoactivateifonlyone
     }
 
+    addProcessNameToTitle() {
+        return this.getBool("setttings", "addProcessNameToWindowTitle", 0)
+    }
+
     showProcessName() {
         return this.getBool("settings", "showProcessName", 1)
     }
+    
+    searchInProcessName() {        
+        return this.getBool("settings", "searchInProcessName", 0)
+    }
+
 
     tabComplete() {
         return this.getBool("settings", "tabComplete", 1)
