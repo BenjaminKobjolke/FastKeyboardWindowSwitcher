@@ -5,6 +5,7 @@ class XDListView {
     clv :=
     digitShortcuts :=
 
+
     _New() {
     }
 
@@ -16,6 +17,42 @@ class XDListView {
         this.digiShortcuts := digiShortcuts
    }
 
+    updateColors(filteredWindows, contentType) {
+        isTrayIconsContent := 0        
+        if(contentType = this.s.contentTypeTrayIcons()) {            
+            isTrayIconsContent := 1
+        }
+        
+        useVirtualDesktops := this.s.useVirtualDesktops()
+        amount := filteredWindows.length()
+        textColor := this.s.guiTextColor()
+
+        if(isTrayIconsContent = 1) {            
+            textColor := this.s.guiTextColorTrayIcons()
+        } else if useVirtualDesktops = 1
+        { 
+            if(desktop = 0) 
+            {                
+                textColor := this.s.virtualDesktopAllDesktopsTextColor()
+            }            
+            else if(desktop != currentDesktop)
+            {
+                textColor := this.s.virtualDesktopOtherDesktopsTextColor()
+            }
+        } 
+
+        this.clv.clear()
+        Loop % LV_GetCount()
+        {
+            window := filteredWindows.get(A_Index)
+            if(!window.getIsRunning()) {
+                this.clv.Row(A_Index, , this.s.guiTextColorHistory())
+            } else {
+                this.clv.Row(A_Index, , textColor)
+            }                                  
+        }
+    }
+
     updateRows(filteredWindows, allWindows, windowHistory, contentType) {
         
         LV_Delete()  
@@ -24,13 +61,14 @@ class XDListView {
         
         ;filteredWindows.sort()
 
-        if S.useVirtualDesktops() = 1
+        if this.s.useVirtualDesktops() = 1
         { 
             filteredWindows.filterByDesktop(currentDesktop)
         }   
 
         amount := filteredWindows.length()
         counter := 1
+        
         ;M sgBox, > %amount%
         Loop %amount%
         {
@@ -67,30 +105,9 @@ class XDListView {
             
             LV_Add("", title, process_name, desktopText, pinned)  
     
-            if(contentType = contentTypeTrayIcons) {            
-                this.clv.Row(A_Index, , S.guiTextColorTrayIcons())            
-            } else if S.useVirtualDesktops() = 1
-            { 
-                if(desktop = currentDesktop) 
-                {
-                    this.clv.Row(A_Index, , S.guiTextColor())
-                }
-                else if(desktop = 0) 
-                {                
-                    this.clv.Row(A_Index, , S.virtualDesktopAllDesktopsTextColor())
-                }            
-                else
-                {
-                    this.clv.Row(A_Index, , S.virtualDesktopOtherDesktopsTextColor())
-                }
-            } else {
-                if(!window.getIsRunning()) {
-                   this.clv.Row(A_Index, , S.guiTextColorHistory())
-                } else {
-                    this.clv.Row(A_Index, , S.guiTextColor())
-                }          
-            }
             counter++  
         }
+
+        this.updateColors(filteredWindows, contentType)
     }
 }

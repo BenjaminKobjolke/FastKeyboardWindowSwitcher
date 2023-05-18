@@ -1,6 +1,12 @@
 ; MyClass.ahk
 class Settings {
 
+    ; 0 = all windows
+    ; 1 = tray icons
+    ; 2 = command list
+    _contentTypeAllWindows := 0
+    _contentTypeTrayIcons := 1
+    _contentTypeCommands := 2
 
     DEFAULT_GUI_SPACING_HORIZONTAL := 20
     DEFAULT_GUI_SPACING_VERTICAL := 20
@@ -10,6 +16,18 @@ class Settings {
     _autoactivateifonlyone := -1
 
     __New() {
+    }
+
+    contentTypeAllWindows() {
+        return this._contentTypeAllWindows
+    }
+
+    contentTypeTrayIcons() {
+        return this._contentTypeTrayIcons
+    }
+
+    contentTypeCommands() {
+        return this._contentTypeCommands
     }
 
     defaultGuiSpacingHorizontal() {
@@ -37,7 +55,7 @@ class Settings {
     }
 
     guiShowHeader() {
-        return this.getBool("gui", "showHeader", 1)
+        return this.getBool("gui", "showHeader", 0)
     }
 
     guiTextColor() {
@@ -93,7 +111,7 @@ class Settings {
     }
 
     showInput() {
-        return this.getBool("settings", "showinput", 0)
+        return this.getBool("settings", "showinput", 1)
     }
 
     searchMinLength() {

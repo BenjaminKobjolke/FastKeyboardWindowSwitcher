@@ -1,5 +1,5 @@
 ;@Ahk2Exe-SetMainIcon icon.ico
-;@Ahk2Exe-ExeName %A_ScriptDir%\bin\iswitch.exe
+;@Ahk2Exe-ExeName %A_ScriptDir%\bin\fast_keyboard_window_switcher.exe
 
 #NoEnv 
 SendMode Input

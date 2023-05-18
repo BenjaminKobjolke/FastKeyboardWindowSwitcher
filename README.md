@@ -1,6 +1,6 @@
-# iSwitch
+# Fast Keyboard Windows Switcher
 
-Switch fast between open windows (Windows tool)
+Switch fast between open windows (for Windows 10 / 11)
 
 ## Installation
 

@@ -68,12 +68,6 @@ closeifinactivated =
 
 selectedIndex := 1
 
-; 0 = all windows
-; 1 = tray icons
-; 2 = command list
-contentTypeAllWindows := 0
-contentTypeTrayIcons := 1
-contentTypeCommands := 2
 contentType := contentTypeAllWindows
 lastContentType := contentTypeAllWindows
 
@@ -154,8 +148,6 @@ if nomatchsound <>
 ;                      from the window list 
 ; 
 ;---------------------------------------------------------------------- 
-xdListView := new XDListView()
-xdListView.setup(VD, S, CLV, digiShortcuts)
 
 allwinDesktopIndex := Array()
 allwinProcessName := Array()
@@ -208,8 +200,6 @@ windowIsOpen := 0
 
 
 #Include %A_ScriptDir%\includes\inc_gui.ahk
-
-
 return
 
 #If S.hotkeyReload()
@@ -260,7 +250,7 @@ HotkeyAction:
     search = 
     numallwin = 0 
     if(S.alwaysStartWithTasks())  {
-        if(contentType = contentTypeTrayIcons) {
+        if(contentType = S.contentTypeTrayIcons()) {
             forceWindowListRefresh = 1
             contentType := contentTypeAllWindows
         }        
@@ -383,7 +373,7 @@ HotkeyAction:
         first_letter := SubStr(search, 1, 1) 
         if first_letter = :
         {
-            if(lastContentType != contentTypeCommands) {
+            if(lastContentType != S.contentTypeCommands()) {
                 forceWindowListRefresh := 1
             }
             lastContentType := contentType
@@ -391,7 +381,7 @@ HotkeyAction:
             GoSub, RefreshWindowList
         } else if length > 1  
         {
-            if(contentType = contentTypeCommands) {
+            if(contentType = S.contentTypeCommands()) {
                 contentType := lastContentType
             }
             GoSub, RefreshWindowList 
@@ -410,7 +400,7 @@ RefreshWindowList:
     {         
         ;allWindows.clear()   
         forceWindowListRefresh := 0
-        if(contentType = contentTypeTrayIcons) {            
+        if(contentType = S.contentTypeTrayIcons()) {            
             trayIcons := trayControl.list()
             numallwin := trayControl.Length()
             
@@ -421,10 +411,12 @@ RefreshWindowList:
                 ; replace pipe (|) characters in the window title, 
                 ; because Gui Add uses it for separating listbox items 
                 StringReplace, title, title, |, -, all  
+                if title = 
+                    continue
                 allTrayWindows.addNew(this_id, title, 0,0)
 
             }
-        }  else if(contentType = contentTypeCommands) {            
+        }  else if(contentType = S.contentTypeCommands()) {            
            
         } else {
             WinGet, id, list, , , Program Manager 
@@ -509,10 +501,10 @@ RefreshWindowList:
     } 
 
     allWindowsAndHistory := new WindowManager()
-    if(contentType = contentTypeTrayIcons) {   
+    if(contentType = S.contentTypeTrayIcons()) {   
         allWindowsAndHistory.addArray(allTrayWindows.getArray())
         allWindowsAndHistory.sort()
-    } else if(contentType = contentTypeCommands) {
+    } else if(contentType = S.contentTypeCommands()) {
         allWindowsAndHistory.addArray(commandList.getArray())
         ;allWindowsAndHistory.sort()
     } else {
@@ -538,7 +530,7 @@ RefreshWindowList:
         ;M sgBox, title %title%
         if(length > 1) {
             searchString := search
-            if(contentType = contentTypeCommands) {
+            if(contentType = S.contentTypeCommands()) {
                 ;remove the : at the start
                 searchString := SubStr(search, 1, length)
             }
@@ -562,13 +554,11 @@ RefreshWindowList:
                 } 
                 else 
                 {
-                    ToolTip, do it
                     match := matchesSearchString(title, searchString)
                     match2 := 
                     if S.searchInProcessName()
                     {
                         procname := window.getProcessName()
-                        ToolTip,  %procname%
                         match2 := matchesSearchString(procname, searchString)
                 
                     }
@@ -620,7 +610,7 @@ RefreshWindowList:
     if amount = 1 
         if autoActivateIfOnlyOne 
         { 
-            if(contentType != contentTypeTrayIcons) 
+            if(contentType != S.contentTypeTrayIcons()) 
             {
                 ; only autoactivate if the search string is not empty
                 ; otherwise the gui would close if only one windows is available
@@ -821,7 +811,7 @@ return
 
 #If guiActive = 1 and S.useDelToEndTask()
     DEL::        
-       if(contentType != contentTypeAllWindows) {
+       if(contentType != S.contentTypeAllWindows()) {
             ;trayControl.remove(winid)
             return
         } else {
@@ -857,10 +847,10 @@ return
 
 #If guiActive = 1
     F1::  
-        if(contentType = contentTypeTrayIcons) {
-            contentType := contentTypeAllWindows
+        if(contentType = S.contentTypeTrayIcons()) {
+            contentType := S.contentTypeAllWindows()
         } else {
-            contentType := contentTypeTrayIcons
+            contentType := S.contentTypeTrayIcons()
         }
         lastContentType := contentType
         forceWindowListRefresh = 1      
@@ -872,7 +862,7 @@ return
         if(selectedIndex < 1) {
             return
         }
-        if(contentType != contentTypeAllWindows) {
+        if(contentType != S.contentTypeAllWindows()) {
             return
         } 
         window := filteredWindows.get(selectedIndex)
@@ -888,7 +878,7 @@ return
 ; 
 ActivateWindow:
     window := filteredWindows.get(selectedIndex)
-    if(contentType = contentTypeTrayIcons) {     
+    if(contentType = S.contentTypeTrayIcons()) {     
         window_id := window.getHwnd()
         if(S.moveMouse()) {               
             winTools := new WinTools()

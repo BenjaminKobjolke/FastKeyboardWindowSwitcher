@@ -35,7 +35,8 @@ SetupGui:
     }
 
     CLV := New LV_Colors(HLV)
-
+    xdListView := new XDListView()
+    xdListView.setup(VD, S, CLV, digiShortcuts)
 return
 
 MyListView:  
