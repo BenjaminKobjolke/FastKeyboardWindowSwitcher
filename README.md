@@ -178,6 +178,22 @@ Alternatively you can add the process name to its own column:
 
 which is enabled by default.
 
+### 22.05.2023
+
+_Do not trigger hotkey for window title_
+
+There might be windows you do not want the hotkey to be triggered for.
+For example you have the tool running on your local computer and you are also using it via remote desktop.
+Pressing the hotkey then triggers the tool on your local computer and also on the remote computer.
+
+To prevent this you can add the window title to the following list:
+
+- copy list_do_not_trigger_example.txt to list_do_not_trigger.txt
+- add the window title to the list seperated by a "|". Partial matches are possible.
+
+Example:
+remote|AnyDesk
+
 <hr>
 
 # setttins.ini
