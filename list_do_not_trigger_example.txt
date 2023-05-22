@@ -1,1 +1,1 @@
-Remotedesktopverbindung
+remote|AnyDesk
