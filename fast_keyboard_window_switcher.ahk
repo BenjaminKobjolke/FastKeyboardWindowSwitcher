@@ -250,13 +250,11 @@ return
 
 HotkeyAction:    
     WinGetTitle, title, A
-    ;M sgBox, %title%
     shouldNotTrigger := filtersList.shouldNotTriggerForWindow(title)
     if shouldNotTrigger
     {
         return
-    }
-    return
+    }    
 
     search = 
     numallwin = 0 
