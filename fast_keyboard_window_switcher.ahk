@@ -69,8 +69,8 @@ closeifinactivated =
 
 selectedIndex := 1
 
-contentType := contentTypeAllWindows
-lastContentType := contentTypeAllWindows
+contentType := S.contentTypeAllWindows()
+lastContentType := S.contentTypeAllWindows()
 
 forceWindowListRefresh := 0
 
@@ -820,22 +820,21 @@ return
 
 #If guiActive = 1 and S.useDelToEndTask()
     DEL::        
-       if(contentType != S.contentTypeAllWindows()) {
+        allWindowsContentType := S.contentTypeAllWindows()
+        if(contentType != S.contentTypeAllWindows()) {
             ;trayControl.remove(winid)
             return
-        } else {
-            window := filteredWindows.get(selectedIndex)
-            winid := window.getHwnd()  
-        
-            if(!window.getIsRunning()) {
-                return
-            }
-            WinClose, ahk_id %winid% 
-            LV_Delete(selectedIndex)
-            forceWindowListRefresh = 1
-            GoSub, RefreshWindowList  
         }
-             
+        window := filteredWindows.get(selectedIndex)
+        winid := window.getHwnd()  
+
+        if(!window.getIsRunning()) {
+            return
+        }
+        WinClose, ahk_id %winid% 
+        LV_Delete(selectedIndex)
+        forceWindowListRefresh = 1
+        GoSub, RefreshWindowList  
     return
 #If
 
