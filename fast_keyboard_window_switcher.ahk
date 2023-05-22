@@ -14,6 +14,7 @@ If Not A_IsAdmin {
 }
 
 #Include %A_ScriptDir%\includes\includes.ahk
+filtersList := new FilterLists()
 
 commandList := new Commands()
 A := new biga()
@@ -102,6 +103,7 @@ FileRead, filterlist, filterlist.txt
 ; one shortcut per line
 ; example: tb|thunderbird
 FileRead, shortcutslist, shortcutslist.txt
+
 
 
 ; Set this yes to update the list of windows every time the contents of the 
@@ -247,6 +249,15 @@ CheckHotkey:
 return
 
 HotkeyAction:    
+    WinGetTitle, title, A
+    ;M sgBox, %title%
+    shouldNotTrigger := filtersList.shouldNotTriggerForWindow(title)
+    if shouldNotTrigger
+    {
+        return
+    }
+    return
+
     search = 
     numallwin = 0 
     if(S.alwaysStartWithTasks())  {

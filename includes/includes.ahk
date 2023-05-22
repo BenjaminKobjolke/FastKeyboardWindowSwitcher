@@ -16,3 +16,5 @@
 #Include %A_ScriptDir%\classes\TrayControl.ahk
 #Include %A_ScriptDir%\classes\Settings.ahk
 #Include %A_ScriptDir%\classes\XDListView.ahk
+
+#Include %A_ScriptDir%\classes\FilterLists.ahk
