@@ -37,7 +37,7 @@ class FilterLists {
             cVal := % this.doNotTriggerList[index]                    
             if InStr(title, cVal)
             {
-                MsgBox, %title% contains %cVal%
+                ;M sgBox, %title% contains %cVal%
                 return true
             }    
             index := index + 1
