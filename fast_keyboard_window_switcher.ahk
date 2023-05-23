@@ -16,8 +16,7 @@ If Not A_IsAdmin {
 #Include %A_ScriptDir%\includes\includes.ahk
 filtersList := new FilterLists()
 
-commandFactory := new CommandFactory()
-commandList := new Commands()
+;commandList := commandFactory.create()
 A := new biga()
 trayControl := new TrayControl()
 S := new Settings()
@@ -27,6 +26,10 @@ windowHistory := new WindowHistory()
 filteredWindows := new WindowManager()
 allWindows := new WindowManager()
 allTrayWindows := new WindowManager()
+
+commandFactory := new CommandFactory()
+commandWindows := commandFactory.create()
+
 
 ;---------------------------------------------------------------------- 
 ; 
@@ -127,7 +130,7 @@ nomatchsound = %windir%\Media\ding.wav
 
 if nomatchsound <> 
     ifnotexist, %nomatchsound% 
-        msgbox, Sound file %nomatchsound% not found. No sound will be played. 
+        ;m sgbox, Sound file %nomatchsound% not found. No sound will be played. 
 */
 
 ;---------------------------------------------------------------------- 
@@ -255,7 +258,6 @@ HotkeyAction:
     {
         return
     }    
-
     search = 
     numallwin = 0 
     if(S.alwaysStartWithTasks())  {
@@ -266,11 +268,11 @@ HotkeyAction:
     }
     WinGet, lastActiveWindowId, ID, A
 
+    GoSub, RefreshWindowList
     GoSub, UpdateGui
 
     Loop 
     {  
-
         Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
 
         if ErrorLevel = EndKey:enter 
@@ -374,19 +376,17 @@ HotkeyAction:
             index := index + 1
         }    
 
-        ;T oolTip, %search%
         GuiControl,, Edit1, %search% 
         GuiControl,, InputText, %search% 
         length := StrLen(search)
-
         first_letter := SubStr(search, 1, 1) 
-        if first_letter = :
+        if(first_letter = ":" or first_letter = ".")
         {
-            if(lastContentType != S.contentTypeCommands()) {
+            if(contentType != S.contentTypeCommands()) {
                 forceWindowListRefresh := 1
             }
             lastContentType := contentType
-            contentType := contentTypeCommands
+            contentType := S.contentTypeCommands()
             GoSub, RefreshWindowList
         } else if length > 1          
         {
@@ -394,127 +394,131 @@ HotkeyAction:
                 contentType := lastContentType
             }
             GoSub, RefreshWindowList 
-        }
+        } 
     } 
     
     Gosub, CleanExit 
 
 return 
 
+UpdateWindowArrays:
+    if(contentType = S.contentTypeTrayIcons()) {            
+        trayIcons := trayControl.list()
+        numallwin := trayControl.Length()
+        
+        allTrayWindows.clear()
+        Loop, % numallwin {
+            title := trayIcons[A_Index].process
+            this_id := trayIcons[A_Index].hwnd
+            ; replace pipe (|) characters in the window title, 
+            ; because Gui Add uses it for separating listbox items 
+            StringReplace, title, title, |, -, all  
+            if title = 
+                continue
+            allTrayWindows.addNew(this_id, title, 0,0)
+        }
+
+        return
+    }
+
+    if(contentType = S.contentTypeAllWindows()) {
+        WinGet, id, list, , , Program Manager 
+        Loop, %id% 
+        {               
+            StringTrimRight, this_id, id%a_index%, 0 
+            WinGetTitle, title, ahk_id %this_id% 
+            ;M sgBox, %title%
+            hwnd := id%A_Index%    
+            desktopNum := 0        
+            if S.useVirtualDesktops() = 1 
+            {                
+                desktopNum := VD.getDesktopNumOfWindow("ahk_id" hwnd)
+                If (desktopNum < 0) ;-1 for invalid window, 0 for "Show on all desktops", 1 for Desktop 1
+                {
+                    continue
+                }
+                if desktopNum = 2
+                {
+                    ;M sgBox, %title% >%desktopNum%<
+                    ;continue
+                }
+                
+            }            
+
+            ; FIXME: windows with empty titles? 
+            if title = 
+                continue 
+
+            ; don't add the switcher window 
+            if switcher_id = %this_id% 
+                continue 
+
+            ; don't add titles which match any of the filters 
+            if filterlist <> 
+            { 
+                filtered = 
+
+                loop 
+                { 
+                    stringtrimright, filter, filters%a_index%, 0 
+                    if filter = 
+                    break 
+                    else 
+                        ifinstring, title, %filter% 
+                        { 
+                            filtered = yes 
+                            break 
+                        } 
+                } 
+
+                if filtered = yes 
+                    continue 
+            } 
+
+            ; replace pipe (|) characters in the window title, 
+            ; because Gui Add uses it for separating listbox items 
+            StringReplace, title, title, |, -, all 
+            
+
+            ; show process name if enabled 
+            if S.showProcessName() || S.addProcessNameToWindowTitle()
+            { 
+                WinGet, procname, ProcessName, ahk_id %this_id% 
+
+                stringgetpos, pos, procname, . 
+                if ErrorLevel <> 1 
+                { 
+                    stringleft, procname, procname, %pos% 
+                } 
+
+                if S.addProcessNameToTitle()
+                {
+                    title = %title% (%procname%)
+                }
+            
+            }
+            ;M sgBox, %title% %procname% 
+            allWindows.addIfNotExists(this_id, title, procname, desktopNum)           
+        }             
+    }
+return
 
 RefreshWindowList: 
     ; refresh the list of windows if necessary 
     filteredWindows.clear()
-    if ( dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
+    if (dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
     {         
-        ;allWindows.clear()   
+        ;M sgBox, do it
         forceWindowListRefresh := 0
-        if(contentType = S.contentTypeTrayIcons()) {            
-            trayIcons := trayControl.list()
-            numallwin := trayControl.Length()
-            
-            allTrayWindows.clear()
-            Loop, % numallwin {
-                title := trayIcons[A_Index].process
-                this_id := trayIcons[A_Index].hwnd
-                ; replace pipe (|) characters in the window title, 
-                ; because Gui Add uses it for separating listbox items 
-                StringReplace, title, title, |, -, all  
-                if title = 
-                    continue
-                allTrayWindows.addNew(this_id, title, 0,0)
-
-            }
-        }  else if(contentType = S.contentTypeCommands()) {            
-           
-        } else {
-            WinGet, id, list, , , Program Manager 
-            Loop, %id% 
-            {               
-                StringTrimRight, this_id, id%a_index%, 0 
-                WinGetTitle, title, ahk_id %this_id% 
-                ;M sgBox, %title%
-                hwnd := id%A_Index%    
-                desktopNum := 0        
-                if S.useVirtualDesktops() = 1 
-                {                
-                    desktopNum := VD.getDesktopNumOfWindow("ahk_id" hwnd)
-                    If (desktopNum < 0) ;-1 for invalid window, 0 for "Show on all desktops", 1 for Desktop 1
-                    {
-                        continue
-                    }
-                    if desktopNum = 2
-                    {
-                        ;M sgBox, %title% >%desktopNum%<
-                        ;continue
-                    }
-                    
-                }            
-
-                ; FIXME: windows with empty titles? 
-                if title = 
-                    continue 
-
-                ; don't add the switcher window 
-                if switcher_id = %this_id% 
-                    continue 
-
-                ; don't add titles which match any of the filters 
-                if filterlist <> 
-                { 
-                    filtered = 
-
-                    loop 
-                    { 
-                        stringtrimright, filter, filters%a_index%, 0 
-                        if filter = 
-                        break 
-                        else 
-                            ifinstring, title, %filter% 
-                            { 
-                                filtered = yes 
-                                break 
-                            } 
-                    } 
-
-                    if filtered = yes 
-                        continue 
-                } 
-
-                ; replace pipe (|) characters in the window title, 
-                ; because Gui Add uses it for separating listbox items 
-                StringReplace, title, title, |, -, all 
-                
-
-                ; show process name if enabled 
-                if S.showProcessName() || S.addProcessNameToWindowTitle()
-                { 
-                    WinGet, procname, ProcessName, ahk_id %this_id% 
-
-                    stringgetpos, pos, procname, . 
-                    if ErrorLevel <> 1 
-                    { 
-                        stringleft, procname, procname, %pos% 
-                    } 
-
-                    if S.addProcessNameToTitle()
-                    {
-                        title = %title% (%procname%)
-                    }
-                
-                }
-                ;M sgBox, %title% %procname% 
-                allWindows.addIfNotExists(this_id, title, procname, desktopNum)           
-            }             
-        }      
-    } 
-
+        GoSub, UpdateWindowArrays
+    }
+    ;M sgBox, |%search%|
     allWindowsAndHistory := new WindowManager()
     if(contentType = S.contentTypeTrayIcons()) {   
         allWindowsAndHistory.addArray(allTrayWindows.getArray())
         allWindowsAndHistory.sort()
     } else if(contentType = S.contentTypeCommands()) {
-        allWindowsAndHistory.addArray(commandList.getArray())
+        allWindowsAndHistory.addArray(commandWindows.getArray())
         ;allWindowsAndHistory.sort()
     } else {
         allWindows.removeNonExistent()
@@ -531,17 +535,23 @@ RefreshWindowList:
 
     amount := allWindowsAndHistory.length()
 
+    minLength := 2
+    if(contentType = S.contentTypeCommands()) {
+        minLength := 3
+    }
     length := StrLen(search)
     Loop, %amount% 
     { 
         window := allWindowsAndHistory.get(A_Index)
         title := window.getTitle()
         ;M sgBox, title %title%
-        if(length > 1) {
+        if(length >= minLength) {
             searchString := search
             if(contentType = S.contentTypeCommands()) {
                 ;remove the : at the start
-                searchString := SubStr(search, 1, length)
+                ;M sgBox, %title%
+                searchString := SubStr(search, 2)
+                ;T oolTip, ---%searchString%---
             }
             if searchString <> 
                 
@@ -569,7 +579,6 @@ RefreshWindowList:
                     {
                         procname := window.getProcessName()
                         match2 := matchesSearchString(procname, searchString)
-                
                     }
 
                     if match = && match2 =
@@ -585,11 +594,12 @@ RefreshWindowList:
 
     noWindowsFound := false
     amount := filteredWindows.length()
+    ;T oolTip, %amount% windows found
     if(amount < 1) {
         noWindowsFound := true
         filteredWindows.addNew(0, "No windows found", "", 0)
     }
-    ;M sgBox, %amount%
+    ;M sgBox, >%search%<
     selectedIndex := 1
     ; if the pattern didn't match any window 
     if amount = 0 
@@ -930,8 +940,16 @@ ActivateWindow:
 
 
     title := window.getTitle()
-    ;M sgBox, %title%
-    activateStatus := window.activate(S.moveMouse(), S.saveMousePos())
+    ;M sgBox, %title% %selectedIndex%
+    if(contentType = S.contentTypeCommands()) {
+        ;index := selectedIndex - 1
+        commandWindow := commandWindows.get(selectedIndex)
+        handler := new CommandHandler(commandWindow)
+        ;M sgBox, %commandString%
+        activateStatus := 1
+    } else {
+        activateStatus := window.activate(S.moveMouse(), S.saveMousePos())
+    }
 
     if(activateStatus = 1) {   
         Gui, Submit    
@@ -1007,4 +1025,5 @@ CleanExit:
     settimer, BgActivationTimer, off 
 
 exit 
+
 

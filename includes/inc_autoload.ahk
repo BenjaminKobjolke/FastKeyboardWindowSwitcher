@@ -6,5 +6,6 @@
 #Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\WindowObject.ahk
 #Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\XDListView.ahk
 #Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\commands\CommandFactory.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\commands\CommandHandler.ahk
 #Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\commands\CommandObject.ahk
 #Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\commands\Commands.ahk

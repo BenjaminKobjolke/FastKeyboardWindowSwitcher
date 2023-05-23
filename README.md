@@ -194,6 +194,14 @@ To prevent this you can add the window title to the following list:
 Example:
 remote|AnyDesk
 
+### 24.05.2023
+
+_Configuration via ":" / "."_
+
+Type ":" or "." as the first character to show a list of availble commands / options.
+
+"reload" and "quit" are available for now.
+
 <hr>
 
 # setttins.ini

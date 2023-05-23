@@ -161,8 +161,7 @@ CalculateWindowDimensions(guiSpacingHorizontal, guiSpacingVertical) {
 
 UpdateGui:
     GuiControl,, Edit1 
-    GuiControl,, InputText 
-    GoSub, RefreshWindowList 
+    GuiControl,, InputText
 
     WinGet, orig_active_id, ID, A 
     prev_active_id = %orig_active_id%
