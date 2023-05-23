@@ -943,7 +943,7 @@ ActivateWindow:
     ;M sgBox, %title% %selectedIndex%
     if(contentType = S.contentTypeCommands()) {
         ;index := selectedIndex - 1
-        commandWindow := commandWindows.get(selectedIndex)
+        commandWindow := filteredWindows.get(selectedIndex)
         handler := new CommandHandler(commandWindow)
         ;M sgBox, %commandString%
         activateStatus := 1
