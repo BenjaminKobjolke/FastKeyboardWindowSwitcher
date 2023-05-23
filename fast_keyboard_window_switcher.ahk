@@ -16,6 +16,7 @@ If Not A_IsAdmin {
 #Include %A_ScriptDir%\includes\includes.ahk
 filtersList := new FilterLists()
 
+commandFactory := new CommandFactory()
 commandList := new Commands()
 A := new biga()
 trayControl := new TrayControl()
@@ -387,7 +388,7 @@ HotkeyAction:
             lastContentType := contentType
             contentType := contentTypeCommands
             GoSub, RefreshWindowList
-        } else if length > 1  
+        } else if length > 1          
         {
             if(contentType = S.contentTypeCommands()) {
                 contentType := lastContentType

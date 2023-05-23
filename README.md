@@ -209,6 +209,15 @@ when the iswitch window opens it goes back to showing the tasks instead of the t
 If the window first opens and you starting typing, the window list will not be updated until this min length is reached.
 This improves the performance. Otherwise the input lags and it might miss the first character you type.
 
+# Development
+
+## Adding classes
+
+- add your class to classes\
+- run update_autoloader.ahk to update includes\inc_autoload.ahk
+
+<hr>
+
 # original comments
 
 iswitchw - Incrementally switch between windows using substrings

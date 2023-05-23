@@ -1,0 +1,10 @@
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\FilterLists.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\Settings.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\TrayControl.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\WindowHistory.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\WindowManager.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\WindowObject.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\XDListView.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\commands\CommandFactory.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\commands\CommandObject.ahk
+#Include, D:\GIT\BenjaminKobjolke\FastKeyboardWindowSwitcher\classes\commands\Commands.ahk
