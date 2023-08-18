@@ -690,7 +690,6 @@ RefreshWindowList:
                 {
                     while(A_TimeIdle < 100) 
                     {             
-                        ToolTip, %A_TimeIdle%   
                         Sleep, 10
                         counter := counter + 1
                         if(counter > maxIdleCounter) {
