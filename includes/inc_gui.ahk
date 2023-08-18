@@ -1,4 +1,8 @@
 SetupGui:
+    if(setupDone =1 ) {
+        return
+    }
+    setupDone := 1
     Gui, +LastFound +AlwaysOnTop -Caption   
     Gui, Color, black,black
     WinSet, Transparent, % S.guiTransparency()

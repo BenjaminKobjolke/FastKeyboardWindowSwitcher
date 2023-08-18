@@ -149,6 +149,11 @@ class Settings {
     tabComplete() {
         return this.getBool("settings", "tabComplete", 1)
     }
+    
+    tapTime() {
+        return this.getString("triggerkey", "tapTime", 150)
+    }
+
 
     /*
     *   set this to yes to enable digit shortcuts when there are ten or 

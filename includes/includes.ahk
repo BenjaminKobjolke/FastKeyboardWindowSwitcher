@@ -4,6 +4,7 @@
 #Include, %A_ScriptDir%/libraries/tray_lib.ahk
 #Include, %A_ScriptDir%/autohotkey_libraries/WinTools.ahk
 #Include, %A_ScriptDir%/github_modules/Class_LV_Colors/Sources/Class_LV_Colors.ahk
+#include, %A_ScriptDir%/github_modules/TapHoldManager/lib/TapHoldManager.ahk
 
 #Include %A_ScriptDir%\node_modules
 #Include biga.ahk\export.ahk

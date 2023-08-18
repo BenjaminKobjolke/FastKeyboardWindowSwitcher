@@ -14,12 +14,15 @@ If Not A_IsAdmin {
 }
 
 #Include %A_ScriptDir%\includes\includes.ahk
+
 filtersList := new FilterLists()
 
 ;commandList := commandFactory.create()
 A := new biga()
 trayControl := new TrayControl()
 S := new Settings()
+
+thm := new TapHoldManager(S.tapTime(),500,2)
 
 windowHistory := new WindowHistory()
 
@@ -79,6 +82,7 @@ lastContentType := S.contentTypeAllWindows()
 forceWindowListRefresh := 0
 
 lastActiveWindowId := 0
+activeWindowId := 0
 
 if S.useVirtualDesktops() = 1
 {
@@ -204,6 +208,8 @@ if shortcutslist <>
 
 windowIsOpen := 0
 
+Sleep, 100
+thm.Add("CapsLock", Func("mainTriggerKey"))
 
 #Include %A_ScriptDir%\includes\inc_gui.ahk
 return
@@ -216,6 +222,49 @@ return
     }
 #If
 
+SwitchBackToLastWindow:    
+    activeID := WinExist("A")
+    if(activeID != activeWindowId) {
+        ; the user switched to another window without using fkws
+        ; so we switch back to the last active window
+        activeID := activeWindowId
+        
+        if(S.saveMousePos()) {
+            allWindows.storeMousePosForActiveWindow(activeID)
+            filteredWindows.storeMousePosForActiveWindow(activeID)
+        }
+        activeWindow := allWindows.getActiveWindow(activeWindowId)
+        lastActiveWindowId := WinExist("A")
+        activeWindow.activate(S.moveMouse(), S.saveMousePos())
+        return
+    }
+    if(S.saveMousePos()) {
+        allWindows.storeMousePosForActiveWindow(activeID)
+        filteredWindows.storeMousePosForActiveWindow(activeID)
+    }
+    lastActiveWindow := allWindows.getActiveWindow(lastActiveWindowId)
+    lastActiveWindow.activate(S.moveMouse(), S.saveMousePos())
+    lastActiveWindowId := activeID
+return
+
+mainTriggerKey(isHold, taps, state) { 
+	;ToolTip % "1`n" (isHold ? "HOLD" : "TAP") "`nTaps: " taps "`nState: " state
+    if (isHold) {
+        return
+    }
+    global guiActive
+    if(taps = 2) {
+       GoSub, SwitchBackToLastWindow
+    } else {
+        if(guiActive = 1) {
+            send, {esc} 
+            GoSub, CloseGui
+        } else {
+            GoSub, HotkeyAction
+        }
+    }
+}
+
 /*
 #If S.useVirtualDesktops() = 1
     !F1::VD.goToDesktopNum(1)
@@ -226,7 +275,7 @@ return
     +F10::VD.TogglePinWindow("A")
 #If
 */
-
+/*
 CapsLock:: 
     SetTimer, CheckHotkey, Off
     SetTimer, StartHotkeyChecking, 300
@@ -234,6 +283,7 @@ CapsLock::
     SetTimer, StartHotkeyChecking, Off
     SetTimer, CheckHotkey, Off
 return
+
 
 StartHotkeyChecking:
     SetTimer, StartHotkeyChecking, Off
@@ -250,7 +300,7 @@ CheckHotkey:
         GoSub, CloseGui
     }
 return
-
+*/
 HotkeyAction:    
     WinGetTitle, title, A
     shouldNotTrigger := filtersList.shouldNotTriggerForWindow(title)
@@ -634,11 +684,18 @@ RefreshWindowList:
                 ; only autoactivate if the search string is not empty
                 ; otherwise the gui would close if only one windows is available
                 ; and you think the app doesnt work
+                maxIdleCounter := 10
+                counter := 0
                 if search != 
                 {
                     while(A_TimeIdle < 100) 
-                    {                
-                        Sleep, 100
+                    {             
+                        ToolTip, %A_TimeIdle%   
+                        Sleep, 10
+                        counter := counter + 1
+                        if(counter > maxIdleCounter) {
+                            break
+                        }
                     }            
                     GoSub, ActivateWindow 
                     Gosub, CleanExit             
@@ -938,7 +995,6 @@ ActivateWindow:
         filteredWindows.storeMousePosForActiveWindow(lastActiveWindowId)
     }
 
-
     title := window.getTitle()
     ;M sgBox, %title% %selectedIndex%
     if(contentType = S.contentTypeCommands()) {
@@ -954,6 +1010,7 @@ ActivateWindow:
     if(activateStatus = 1) {   
         Gui, Submit    
         guiActive := 0 
+        activeWindowId := window.getHwnd()
         return
     } else {
         forceWindowListRefresh = 1

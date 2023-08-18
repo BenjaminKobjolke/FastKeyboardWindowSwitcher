@@ -7,3 +7,6 @@
 [submodule "github_modules/VD.ahk"]
 	path = github_modules/VD.ahk
 	url = https://github.com/FuPeiJiang/VD.ahk.git
+[submodule "github_modules/TapHoldManager"]
+	path = github_modules/TapHoldManager
+	url = https://github.com/evilC/TapHoldManager.git

@@ -5,3 +5,5 @@ filterlist.txt
 /_settings.ini
 /history
 /list_do_not_trigger.txt
+/savedlist.txt
+/tests
