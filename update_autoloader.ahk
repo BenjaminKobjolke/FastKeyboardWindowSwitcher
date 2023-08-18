@@ -8,6 +8,8 @@ classes_dir := A_ScriptDir . "\classes"
 Loop Files, %classes_dir%\*.ahk, FR
 {
     filePath := A_LoopFileFullPath
+    ; remove A_ScriptDir from filePath
+    StringReplace, filePath, filePath, %A_ScriptDir%\, ..\ , All
     ;MsgBox, %filePath%
     includeString = #Include, %filePath%
     FileAppend, %includeString%`n, %mergeIncFilePath%
