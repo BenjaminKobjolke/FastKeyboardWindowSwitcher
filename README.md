@@ -72,6 +72,16 @@ _The idea comes from Emacs where it is used to switch between opened files. Afte
 
 <hr>
 
+## Hotkeys
+
+### F9
+
+disable / enable to automatically activate the window if only one window is left in the search result. The default can be set in the settings.ini.
+
+### ctrl + r
+
+reload the window list
+
 ## New features addded:
 
 ### Move mouse
