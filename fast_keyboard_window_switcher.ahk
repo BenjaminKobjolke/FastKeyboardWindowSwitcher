@@ -55,25 +55,6 @@ guiActive := 0
 ; 
 firstlettermatch = 
 
-; set this to yes to enable activating the currently selected 
-; window in the background 
-activateselectioninbg =  
-
-; number of milliseconds to wait for the user become idle, before 
-; activating the currently selected window in the background 
-; 
-; it has no effect if activateselectioninbg is off 
-; 
-; if set to blank the current selection is activated immediately 
-; without delay 
-bgactivationdelay = 300 
-
-
-; Close switcher window if the user activates an other window. 
-; It does not work well if activateselectioninbg is enabled, so 
-; currently they cannot be enabled together.    
-closeifinactivated = 
-
 selectedIndex := 1
 
 contentType := S.contentTypeAllWindows()
@@ -92,13 +73,6 @@ if S.useVirtualDesktops() = 1
         static dummyStatic1 := VD.init()
     }   
 }
-
-if activateselectioninbg <> 
-    if closeifinactivated <> 
-    { 
-        msgbox, activateselectioninbg and closeifinactivated cannot be enabled together 
-        exitapp 
-    } 
 
 ; List of subtsrings separated with pipe (|) characters (e.g. carpe|diem). 
 ; Window titles containing any of the listed substrings are filtered out 
@@ -322,13 +296,16 @@ HotkeyAction:
     GoSub, UpdateGui
 
     Loop 
-    {  
+    {
+        if guiActive = 0 
+        {
+            break 
+        }  
         Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
 
         if ErrorLevel = EndKey:enter 
         { 
             GoSub, ActivateWindow             
-            
             break 
         } 
 
@@ -344,45 +321,35 @@ HotkeyAction:
             continue 
         } 
 
-        if ErrorLevel = EndKey:tab 
-            if completion = 
-                continue 
-            else 	
-                input = %completion% 
-        
-        ; pass these keys to the selector window 
-
         if ErrorLevel = EndKey:up 
         {         
             Send, {up} 
-            GoSuB ActivateWindowInBackgroundIfEnabled 
             continue 
         } 
 
         if ErrorLevel = EndKey:down 
         { 
             Send, {down} 
-            GoSuB ActivateWindowInBackgroundIfEnabled 
             continue 
         } 
 
         if ErrorLevel = EndKey:pgup 
         { 
             Send, {pgup} 
-
-            GoSuB ActivateWindowInBackgroundIfEnabled 
             continue 
         } 
 
         if ErrorLevel = EndKey:pgdn 
         { 
             Send, {pgdn} 
-            GoSuB ActivateWindowInBackgroundIfEnabled 
             continue 
-        } 
-
-        ; FIXME: probably other error level cases 
-        ; should be handled here (interruption?) 
+        }  
+        
+        if ErrorLevel = EndKey:tab 
+            if completion = 
+                continue 
+            else 	
+                input = %completion% 
 
         ; invoke digit shortcuts if applicable 
         if S.digitShortcuts() <> 
@@ -446,9 +413,6 @@ HotkeyAction:
             GoSub, RefreshWindowList 
         } 
     } 
-    
-    Gosub, CleanExit 
-
 return 
 
 UpdateWindowArrays:
@@ -657,7 +621,6 @@ RefreshWindowList:
         if search = 
         { 
             Gui, cancel 
-            Gosub, CleanExit 
         } 
         ; delete the last character 
         else 
@@ -697,12 +660,10 @@ RefreshWindowList:
                         }
                     }            
                     GoSub, ActivateWindow 
-                    Gosub, CleanExit             
                 }
             }
         } 
 
-    GoSub, ActivateWindowInBackgroundIfEnabled 
     GoSub, CheckCompletion
 
 return 
@@ -828,7 +789,6 @@ WaitForUserToEndTyping:
     if(A_TimeIdle > 100) {
         SetTimer, WaitForUserToEndTyping, Off
         GoSub, ActivateWindow 
-        Gosub, CleanExit     
     }
 return
 ;---------------------------------------------------------------------- 
@@ -920,7 +880,7 @@ return
 #If
 
 #If guiActive = 1
-    F1::  
+    F1:: 
         if(contentType = S.contentTypeTrayIcons()) {
             contentType := S.contentTypeAllWindows()
         } else {
@@ -974,15 +934,6 @@ ActivateWindow:
         Sleep, 100
         Gui, Submit    
         guiActive := 0 
-        /*
-        WinGet, ID, List
-        Loop %ID%
-        {
-            WinActivate, ahk_id  ID%A_Index%
-            winTools.moveMouseToCurrentWindowCenter() 
-            break
-        }
-        */
         return
     }
     
@@ -1016,70 +967,3 @@ ActivateWindow:
         GoSub, HotkeyAction
     }
 return 
-
-;---------------------------------------------------------------------- 
-; 
-; Activate selected window in the background 
-; 
-ActivateWindowInBackground:           
-    guicontrolget, index,, ListView1 
-    window := filteredWindows.get(index)
-    window_id := window.getHwnd()
-
-    if prev_active_id <> %window_id% 
-    { 
-        WinActivate, ahk_id %window_id% 
-        WinActivate, ahk_id %switcher_id% 
-        prev_active_id = %window_id% 
-    } 
-
-return 
-
-;---------------------------------------------------------------------- 
-; 
-; Activate selected window in the background if the option is enabled. 
-; If an activation delay is set then a timer is started instead of 
-; activating the window immediately. 
-; 
-ActivateWindowInBackgroundIfEnabled: 
-
-    if activateselectioninbg = 
-        return 
-
-    ; Don't do it just after the switcher is activated. It is confusing 
-    ; if active window is changed immediately. 
-    WinGet, id, ID, ahk_id %switcher_id% 
-    if id = 
-        return 
-
-    if bgactivationdelay = 
-        GoSub ActivateWindowInBackground 
-    else 
-        settimer, BgActivationTimer, %bgactivationdelay% 
-
-return 
-
-;---------------------------------------------------------------------- 
-; 
-; Check if the user is idle and if so activate the currently selected 
-; window in the background 
-; 
-BgActivationTimer: 
-
-    settimer, BgActivationTimer, off 
-
-    GoSub ActivateWindowInBackground 
-
-return 
-
-;---------------------------------------------------------------------- 
-; 
-; Stop background window activation timer if necessary and exit 
-; 
-CleanExit: 
-
-    settimer, BgActivationTimer, off 
-
-exit 
-
-

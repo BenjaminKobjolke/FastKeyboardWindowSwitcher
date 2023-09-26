@@ -52,26 +52,17 @@ MyListView:
     if (A_GuiEvent = "I") 
     {        
         selectedIndex :=  A_EventInfo    
-
     }    
 return
-
 
 CloseGui:
     guiActive := 0
     Gui, cancel 
 
     SetTimer,CheckIfGuiStillActive, Off
-    ; restore the originally active window if 
-    ; activateselectioninbg is enabled 
-    if activateselectioninbg <> 
-        WinActivate, ahk_id %orig_active_id% 
-
 return
 
 CheckIfGuiStillActive:
-    Return
-    
     id := WinActive("A")
     
     if(id <> switcher_id)
