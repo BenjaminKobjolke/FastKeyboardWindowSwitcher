@@ -68,6 +68,7 @@ CheckIfGuiStillActive:
     if(id <> switcher_id)
     {
         GoSub, CloseGui
+        return
     }
 return
 
@@ -218,8 +219,7 @@ UpdateGui:
     LV_ModifyCol(counter, statusColumnWidth)
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
-    Gui, Show, % "x" x " y" y " w" width " h" height fkws 
-
+    Gui, Show, % "x" x " y" y " w" width " h" height, fask keyboard window switcher
     guiActive := 1
     
     WinSet, Redraw, , ahk_id %HLV%
@@ -232,7 +232,7 @@ UpdateGui:
     ; been called above). 
     ; Answer: Because when this code runs first the switcher window 	
     ; does not exist yet when RefreshWindowList is called. 
-    WinGet, switcher_id, ID, A 
-        
+    WinGet, switcher_id, ID, A         
+
     SetTimer, CheckIfGuiStillActive, 500
 return
