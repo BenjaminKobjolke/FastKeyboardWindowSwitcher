@@ -219,7 +219,7 @@ UpdateGui:
     LV_ModifyCol(counter, statusColumnWidth)
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
-    Gui, Show, % "x" x " y" y " w" width " h" height, fask keyboard window switcher
+    Gui, Show, % "x" x " y" y " w" width " h" height, fast keyboard window switcher
     guiActive := 1
     
     WinSet, Redraw, , ahk_id %HLV%
