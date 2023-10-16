@@ -218,7 +218,7 @@ UpdateGui:
     LV_ModifyCol(counter, statusColumnWidth)
 
     ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
-    Gui, Show, % "x" x " y" y " w" width " h" height iSwitch      
+    Gui, Show, % "x" x " y" y " w" width " h" height fbws 
 
     guiActive := 1
     
