@@ -214,6 +214,13 @@ Type ":" or "." as the first character to show a list of availble commands / opt
 
 <hr>
 
+### 25.10.2023
+
+Configure desired hotkey in settings.ini.
+Default is hotkey=CapsLock but you can also use TAB or any other key.
+
+<hr>
+
 # setttins.ini
 
 `[trayicons]`

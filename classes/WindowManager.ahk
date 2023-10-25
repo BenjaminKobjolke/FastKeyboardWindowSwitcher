@@ -51,6 +51,18 @@ class WindowManager {
         }
     }
 
+    getProcessName(ahkID) {
+        WinGet, procname, ProcessName, ahk_id %ahkID% 
+
+        stringgetpos, pos, procname, . 
+        if ErrorLevel <> 1 
+        { 
+            stringleft, procname, procname, %pos% 
+        } 
+
+        return procname
+    }
+
     removeNonExistent() {
         WinGet, windowlist, list, , , Program Manager 
         
@@ -77,12 +89,26 @@ class WindowManager {
             }
 
         }    
+        DetectHiddenWindows, On
+        WinGet, List, List, ahk_class AutoHotkey
+        scripts := ""
+        Loop % List {
+            ahkID := List%A_Index%
+            if(ahkID = window_id) {
+                return true
+            }
+        }        
+        DetectHiddenWindows, Off
         return false      
     }
 
     addIfNotExists(hwnd, title, processName, desktop, filePath := "", isRunning := 1) {
         ;M sgBox, the title is %title% --> do it!
         
+        ; replace pipe (|) characters in the window title, 
+        ; because Gui Add uses it for separating listbox items 
+        StringReplace, title, title, |, -, all             
+
         w := new WindowObject(hwnd, title, processName, desktop, filePath, isRunning)
         if(this.hasWindow(w, 1)) {            
             return false
@@ -94,6 +120,10 @@ class WindowManager {
     addNew(hwnd, title, processName, desktop, filePath := "", isRunning := 1) {
         ;M sgBox, the title is %title% --> do it!
         
+        ; replace pipe (|) characters in the window title, 
+        ; because Gui Add uses it for separating listbox items 
+        StringReplace, title, title, |, -, all             
+
         w := new WindowObject(hwnd, title, processName, desktop, filePath, isRunning)
 
         this.windows.push(w)

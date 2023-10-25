@@ -106,6 +106,10 @@ class Settings {
         return this.getString("virtualdesktops", "otherDesktopsTextColor", "0x006868")        
     }
 
+    hotkey() {
+        return this.getString("settings", "hotkey", "CapsLock")
+    }
+
     useDelToEndTask() {
         return this.getBool("settings", "usedeltoendtask", 0)
     }

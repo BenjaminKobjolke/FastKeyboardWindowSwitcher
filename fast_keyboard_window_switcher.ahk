@@ -183,7 +183,7 @@ if shortcutslist <>
 windowIsOpen := 0
 
 Sleep, 100
-thm.Add("CapsLock", Func("mainTriggerKey"))
+thm.Add(S.hotkey(), Func("mainTriggerKey"))
 
 #Include %A_ScriptDir%\includes\inc_gui.ahk
 return
@@ -489,22 +489,10 @@ UpdateWindowArrays:
                     continue 
             } 
 
-            ; replace pipe (|) characters in the window title, 
-            ; because Gui Add uses it for separating listbox items 
-            StringReplace, title, title, |, -, all 
-            
-
             ; show process name if enabled 
             if S.showProcessName() || S.addProcessNameToWindowTitle()
             { 
-                WinGet, procname, ProcessName, ahk_id %this_id% 
-
-                stringgetpos, pos, procname, . 
-                if ErrorLevel <> 1 
-                { 
-                    stringleft, procname, procname, %pos% 
-                } 
-
+                procname := allWindows.getProcessName(this_id)
                 if S.addProcessNameToTitle()
                 {
                     title = %title% (%procname%)
@@ -513,7 +501,33 @@ UpdateWindowArrays:
             }
             ;M sgBox, %title% %procname% 
             allWindows.addIfNotExists(this_id, title, procname, desktopNum)           
-        }             
+        }   
+        /*
+        DetectHiddenWindows, On
+        WinGet, List, List, ahk_class AutoHotkey
+        Loop % List {
+            ahkID := List%A_Index%
+            if allWindows.windowWithIdExists(ahkID)
+                continue
+            WinGetTitle, title, % "ahk_id" ahkID            
+            title := RegExReplace(title, " - AutoHotkey v[\.0-9]+$")
+            splitPath := StrSplit(title, "\")
+            fileNameWithExt := splitPath[splitPath.MaxIndex()]
+            dotPos := InStr(fileNameWithExt, ".",, 0)
+            title := SubStr(fileNameWithExt, 1, dotPos-1)            
+
+            procname := allWindows.getProcessName(ahkID)
+            ;MsgBox, %title%
+            
+            if S.addProcessNameToTitle()
+            {
+                title = %title% (%procname%)
+            }            
+            
+            allWindows.addIfNotExists(ahkID, title, procname, desktopNum)
+        }
+        DetectHiddenWindows, Off
+        */
     }
 return
 
