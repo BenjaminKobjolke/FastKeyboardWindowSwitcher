@@ -33,6 +33,9 @@ allTrayWindows := new WindowManager()
 commandFactory := new CommandFactory()
 commandWindows := commandFactory.create()
 
+; this way we can keep track which window was active last
+highestRunIndex := 0
+
 
 ;---------------------------------------------------------------------- 
 ; 
@@ -185,40 +188,48 @@ windowIsOpen := 0
 Sleep, 100
 thm.Add(S.hotkey(), Func("mainTriggerKey"))
 
+SetTimer, CheckActiveWindow, 250
+
 #Include %A_ScriptDir%\includes\inc_gui.ahk
+return
+
+CheckActiveWindow:
+    newWindowId := WinExist("A") 
+    if(newWindowIde = switcher_id) {
+        return
+    }
+    if(newWindowId != activeWindowId) {
+        highestRunIndex := highestRunIndex + 1
+        activeWindowId := newWindowId
+        allWindows.increaseRunIndexForActiveWindow(activeWindowID, highestRunIndex)
+        GoSub, RefreshWindowList
+    }
 return
 
 #If S.hotkeyReload()
     if(!A_IsCompiled) {            
         #y::                
             reload
-        return             
+        return              
     }
 #If
 
-SwitchBackToLastWindow:    
-    activeID := WinExist("A")
-    if(activeID != activeWindowId) {
-        ; the user switched to another window without using fkws
-        ; so we switch back to the last active window
-        activeID := activeWindowId
+SwitchBackToLastWindow:     
+    currentWindowId := WinExist("A")
+    if(lastActiveWindowId != currentWindowId) {
+        SetTimer, CheckActiveWindow, Off
         
         if(S.saveMousePos()) {
-            allWindows.storeMousePosForActiveWindow(activeID)
-            filteredWindows.storeMousePosForActiveWindow(activeID)
+            allWindows.storeMousePosForActiveWindow(currentWindowId)
+            filteredWindows.storeMousePosForActiveWindow(currentWindowId)
         }
-        activeWindow := allWindows.getActiveWindow(activeWindowId)
-        lastActiveWindowId := WinExist("A")
+        activeWindow := allWindows.getActiveWindow(lastActiveWindowId)
+        title := activeWindow.getTitle()
+        activeWindowId := lastActiveWindowId
+        lastActiveWindowId := currentWindowId
         activeWindow.activate(S.moveMouse(), S.saveMousePos())
-        return
+        ;SetTimer, CheckActiveWindow, 250
     }
-    if(S.saveMousePos()) {
-        allWindows.storeMousePosForActiveWindow(activeID)
-        filteredWindows.storeMousePosForActiveWindow(activeID)
-    }
-    lastActiveWindow := allWindows.getActiveWindow(lastActiveWindowId)
-    lastActiveWindow.activate(S.moveMouse(), S.saveMousePos())
-    lastActiveWindowId := activeID
 return
 
 mainTriggerKey(isHold, taps, state) { 
@@ -552,13 +563,12 @@ RefreshWindowList:
         allWindows.removeNonExistent()
 
         allWindowsAndHistory.addArray(allWindows.getArray())
-
         allWindowsAndHistory.sort()
         amount := allWindowsAndHistory.length()
 
         windowHistory.sort()
 
-        allWindowsAndHistory.addUniqueArray(windowHistory.getArray())
+        allWindowsAndHistory.addUniqueArrayAtTheBottom(windowHistory.getArray())
     }   
 
     amount := allWindowsAndHistory.length()
@@ -570,7 +580,8 @@ RefreshWindowList:
     length := StrLen(search)
     Loop, %amount% 
     { 
-        window := allWindowsAndHistory.get(A_Index)
+        targetIndex := amount - A_Index
+        window := allWindowsAndHistory.get(targetIndex)
         title := window.getTitle()
         ;M sgBox, title %title%
         if(length >= minLength) {
@@ -974,6 +985,7 @@ ActivateWindow:
     if(activateStatus = 1) {   
         Gui, Submit    
         guiActive := 0 
+        lastActiveWindowId := activeWindowId
         activeWindowId := window.getHwnd()
         return
     } else {

@@ -12,6 +12,9 @@ class WindowObject {
     mouseX := 0
     mouseY := 0
 
+    ; the index will increase everyt time the window is in focus
+    runIndex := 0
+
     __New(hwnd, title, processName, desktop, filePath = "", isRunning = 1) {
         ;MsgBox, %hwnd% %title% %processName% %desktop% %filePath%
         
@@ -36,6 +39,10 @@ class WindowObject {
 
     }
 
+    setRunIndex(value) {
+        this.runIndex := value
+    }
+    
     getIsRunning() {
         if(this.isRunning = 1) {
            return true

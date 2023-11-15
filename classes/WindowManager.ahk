@@ -1,10 +1,29 @@
-fn_sortByName(o)
+un_sortByName(o)
 {
     title := o.title
     StringReplace, title, title, +, , All
     StringReplace, title, title, -, , All
     ;M sgBox, % "Sorting by title " . title
 	return title
+}
+
+fn_sortByRunIndex(o)
+{
+    index := o.runIndex    
+    return index
+}
+
+fn_sortByNameAndRunIndex(o)
+{
+    title := o.title
+    StringReplace, title, title, +, , All
+    StringReplace, title, title, -, , All
+
+    ; Pad the runIndex with leading zeros so that numbers are sorted correctly
+    runIndex := o.runIndex
+    runIndexPadded := Format("{:05}", runIndex)
+    sortableString := runIndexPadded . "_" . title
+    return sortableString
 }
 
 fn_sortByIsRunning(o)
@@ -19,6 +38,22 @@ class WindowManager {
 
     __New() {
         this.windows := Array()
+    }
+
+    increaseRunIndexForActiveWindow(activeWindowId, newIndex) {
+        amount := this.windows.MaxIndex()
+        if(amount < 1) {
+            return
+        }
+        Loop, %amount%
+        {
+            window := this.windows[A_Index]
+            if(window.getHwnd() = activeWindowId) {
+                ;eMsgBox, %newRunIndex%
+                window.setRunIndex(newIndex)
+                return
+            }
+        }
     }
 
     setWithArray(windowArray) {
@@ -192,19 +227,40 @@ class WindowManager {
         }
     }
 
-    addUniqueArray(newArray) {
+    addUniqueArrayAtTheBottom(newArray) {
         amount := newArray.MaxIndex()
         Loop, %amount%
         {
             window := newArray[A_Index]
             filePath := window.getFilePath()
             if(!this.hasFilePath(filePath)) {
-                this.windows.Push(window)
+                ;this.windows.Push(window)
+                this.Array_Unshift(this.windows, window)
             } else {
                 ;M sgBox % "Already has file path " . filePath
             }
         }
     }
+
+    /*
+    * Add at the beginning of the array
+    */
+    Array_Unshift(ByRef arr, value)
+    {
+        ; Calculate new length
+        newLength := ObjMaxIndex(arr) + 1
+
+        ; Shift all elements one position to the right
+        Loop, %newLength%
+        {
+            index := newLength - A_Index + 1
+            arr[index] := arr[index - 1]
+        }
+
+        ; Insert the new value at the beginning
+        arr[1] := value
+    }
+
 
     hasFilePath(filePath) {
         amount := this.windows.MaxIndex()
@@ -244,17 +300,18 @@ class WindowManager {
     get(index) {
         return this.windows[index]
     }
-
+    
     getArray() {
         return this.windows
     }
-
 
     sort() {
         global
 
         ;newWindows := A.sortBy(this.windows, Func("fn_sortByIsRunning"))
-        newWindows := A.sortBy(this.windows, Func("fn_sortByName"))
+        ;newWindows := A.sortBy(this.windows, Func("fn_sortByName"))
+        ;newWindows := A.sortBy(this.windows, Func("fn_sortByNameAndRunIndex"))
+        newWindows := A.sortBy(this.windows, Func("fn_sortByRunIndex"))
         this.windows := newWindows
         /*
         amount := newWindows.length()
