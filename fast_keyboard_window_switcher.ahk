@@ -68,6 +68,8 @@ forceWindowListRefresh := 0
 lastActiveWindowId := 0
 activeWindowId := 0
 
+highestRunIndex := 0
+
 if S.useVirtualDesktops() = 1
 {
     DetectHiddenWindows On
@@ -188,6 +190,8 @@ windowIsOpen := 0
 Sleep, 100
 thm.Add(S.hotkey(), Func("mainTriggerKey"))
 
+forceWindowListRefresh := 1
+GoSub, RefreshWindowList
 SetTimer, CheckActiveWindow, 250
 
 #Include %A_ScriptDir%\includes\inc_gui.ahk
@@ -195,13 +199,15 @@ return
 
 CheckActiveWindow:
     newWindowId := WinExist("A") 
-    if(newWindowIde = switcher_id) {
+    if(newWindowId = switcher_id) {
         return
     }
-    if(newWindowId != activeWindowId) {
+    if(activeWindowId = 0 || newWindowId != activeWindowId) {
+        
         highestRunIndex := highestRunIndex + 1
         activeWindowId := newWindowId
-        allWindows.increaseRunIndexForActiveWindow(activeWindowID, highestRunIndex)
+        newIndex := highestRunIndex
+        allWindows.increaseRunIndexForActiveWindow(activeWindowId, newIndex)
         GoSub, RefreshWindowList
     }
 return
@@ -228,7 +234,7 @@ SwitchBackToLastWindow:
         activeWindowId := lastActiveWindowId
         lastActiveWindowId := currentWindowId
         activeWindow.activate(S.moveMouse(), S.saveMousePos())
-        ;SetTimer, CheckActiveWindow, 250
+        SetTimer, CheckActiveWindow, 250
     }
 return
 
@@ -583,7 +589,6 @@ RefreshWindowList:
         targetIndex := amount - A_Index
         window := allWindowsAndHistory.get(targetIndex)
         title := window.getTitle()
-        ;M sgBox, title %title%
         if(length >= minLength) {
             searchString := search
             if(contentType = S.contentTypeCommands()) {
@@ -624,7 +629,7 @@ RefreshWindowList:
                         continue    ; no match 
                 } 
             ;isRunning := window.isRunning()
-            ;M sgBox, %title% -- %isHistory%
+            ;M sgBox, %title% -- %isHistory%            
             filteredWindows.add(window)
         } else {
             filteredWindows.add(window)
@@ -656,8 +661,7 @@ RefreshWindowList:
             GoSub, DeleteSearchChar 
             return 
         } 
-
-
+    
     xdListView.updateRows(filteredWindows, allWindows, windowHistory, contentType)
 
     if(noWindowsFound) {

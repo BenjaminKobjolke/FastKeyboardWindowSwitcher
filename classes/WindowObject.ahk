@@ -42,6 +42,10 @@ class WindowObject {
     setRunIndex(value) {
         this.runIndex := value
     }
+
+    getRunIndex() {
+        return this.runIndex
+    }
     
     getIsRunning() {
         if(this.isRunning = 1) {

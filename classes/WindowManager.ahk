@@ -9,7 +9,7 @@ un_sortByName(o)
 
 fn_sortByRunIndex(o)
 {
-    index := o.runIndex    
+    index := o.getRunIndex()
     return index
 }
 
@@ -48,8 +48,9 @@ class WindowManager {
         Loop, %amount%
         {
             window := this.windows[A_Index]
-            if(window.getHwnd() = activeWindowId) {
-                ;eMsgBox, %newRunIndex%
+            windowId := window.getHwnd()
+            if(windowId = activeWindowId) {
+                title := window.getTitle()
                 window.setRunIndex(newIndex)
                 return
             }
