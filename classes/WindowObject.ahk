@@ -17,9 +17,8 @@ class WindowObject {
 
     __New(hwnd, title, processName, desktop, filePath = "", isRunning = 1) {
         ;MsgBox, %hwnd% %title% %processName% %desktop% %filePath%
-        
         this.title := title
-
+        
         this.isRunning := isRunning
         
         this.hwnd := hwnd
@@ -37,6 +36,16 @@ class WindowObject {
             this.filePath := this.getFilePath()
         }
 
+    }
+
+    getRunIndexAndTitle() {
+        titleString := this.getTitle()
+        StringReplace, titleString, titleString, +, , All
+        StringReplace, titleString, titleString, -, , All                        
+        runIndex := this.getRunIndex()
+        runIndexPadded := Format("{:05}", runIndex)
+        sortableString := runIndexPadded . "_" . titleString            
+        return sortableString
     }
 
     setRunIndex(value) {

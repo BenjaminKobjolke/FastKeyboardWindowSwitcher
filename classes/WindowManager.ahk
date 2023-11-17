@@ -15,15 +15,7 @@ fn_sortByRunIndex(o)
 
 fn_sortByNameAndRunIndex(o)
 {
-    title := o.title
-    StringReplace, title, title, +, , All
-    StringReplace, title, title, -, , All
-
-    ; Pad the runIndex with leading zeros so that numbers are sorted correctly
-    runIndex := o.runIndex
-    runIndexPadded := Format("{:05}", runIndex)
-    sortableString := runIndexPadded . "_" . title
-    return sortableString
+    return o.getRunIndexAndTitle()
 }
 
 fn_sortByIsRunning(o)
@@ -34,10 +26,17 @@ fn_sortByIsRunning(o)
 
 class WindowManager {
 
+    debug := 0
+    debugPrefix := 
     windows := Array()
 
     __New() {
         this.windows := Array()
+    }
+
+    enableDebug(prefix) {
+        this.debug := 1
+        this.debugPrefix := prefix
     }
 
     increaseRunIndexForActiveWindow(activeWindowId, newIndex) {
@@ -48,13 +47,16 @@ class WindowManager {
         Loop, %amount%
         {
             window := this.windows[A_Index]
+            title := window.getTitle()
             windowId := window.getHwnd()
             if(windowId = activeWindowId) {
                 title := window.getTitle()
                 window.setRunIndex(newIndex)
-                return
+                this.sort()                
+                return 1
             }
         }
+        return 0
     }
 
     setWithArray(windowArray) {
@@ -161,8 +163,7 @@ class WindowManager {
         StringReplace, title, title, |, -, all             
 
         w := new WindowObject(hwnd, title, processName, desktop, filePath, isRunning)
-
-        this.windows.push(w)
+        this.add(w)
         return true         
     }
 
@@ -214,6 +215,11 @@ class WindowManager {
         if(this.hasWindow(window)) {
             this.removeWindow(window)
         }
+        title := window.getTitle()
+        length := StrLen(title)
+        if(length < 1) {
+            return
+        }
         this.windows.push(window)
         ;amount := this.windows.MaxIndex()
         ;M sgBox % "Added existing window " . amount 
@@ -224,7 +230,7 @@ class WindowManager {
         Loop, %amount%
         {
             window := newArray[A_Index]
-            this.windows.Push(window)
+            this.add(window)
         }
     }
 
@@ -308,29 +314,35 @@ class WindowManager {
 
     sort() {
         global
-
-        ;newWindows := A.sortBy(this.windows, Func("fn_sortByIsRunning"))
-        ;newWindows := A.sortBy(this.windows, Func("fn_sortByName"))
-        ;newWindows := A.sortBy(this.windows, Func("fn_sortByNameAndRunIndex"))
-        newWindows := A.sortBy(this.windows, Func("fn_sortByRunIndex"))
-        this.windows := newWindows
-        /*
-        amount := newWindows.length()
-        this.clear()
-       
-        Loop, %amount% 
-        { 
-            window := newWindows[A_Index]
-            title := window.getTitle()
-            
-            if(title = "") {
-                continue
-            }
-            
-            this.add(window)
-
+        debug := this.debug
+        debugPrefix := this.debugPrefix
+        debugFileName = logs/log_%debugPrefix%.txt
+        if(debug = 1) {
+            FileDelete, %debugFileName%
         }
-        */
+        ;newWindows := this.windows
+        newWindows := A.sortBy(this.windows, Func("fn_sortByNameAndRunIndex"))
+        this.clear()
+        
+        amount := newWindows.MaxIndex()
+        Loop, %amount%
+        {
+            targetIndex := amount - A_Index + 1
+            window := newWindows[targetIndex]
+            runIndex := window.getRunIndex()
+            window.setRunIndex(runIndex)
+            this.add(window)
+        }
+        
+        Loop, %amount%
+        {
+            window := this.windows[A_Index]
+            sortableTitle := window.getRunIndexAndTitle()
+            hdnw := window.getHwnd()
+            if(debug = 1) {
+                FileAppend, >%hdnw%< - %sortableTitle%`n, %debugFileName%
+            }
+        }
     }
 
     getActiveWindow(lastActiveWindowId) {

@@ -28,6 +28,7 @@ windowHistory := new WindowHistory()
 
 filteredWindows := new WindowManager()
 allWindows := new WindowManager()
+allWindows.enableDebug("allWindows")
 allTrayWindows := new WindowManager()
 
 commandFactory := new CommandFactory()
@@ -190,9 +191,9 @@ windowIsOpen := 0
 Sleep, 100
 thm.Add(S.hotkey(), Func("mainTriggerKey"))
 
-forceWindowListRefresh := 1
-GoSub, RefreshWindowList
-SetTimer, CheckActiveWindow, 250
+;forceWindowListRefresh := 1
+GoSub, UpdateWindowArrays
+SetTimer, CheckActiveWindow, 25
 
 #Include %A_ScriptDir%\includes\inc_gui.ahk
 return
@@ -202,14 +203,18 @@ CheckActiveWindow:
     if(newWindowId = switcher_id) {
         return
     }
-    if(activeWindowId = 0 || newWindowId != activeWindowId) {
-        
+    SetTimer, CheckActiveWindow, Off
+    if(activeWindowId = 0 || newWindowId != activeWindowId) {        
         highestRunIndex := highestRunIndex + 1
         activeWindowId := newWindowId
         newIndex := highestRunIndex
-        allWindows.increaseRunIndexForActiveWindow(activeWindowId, newIndex)
+        success := allWindows.increaseRunIndexForActiveWindow(activeWindowId, newIndex)
+        if(success = 0) {
+            forceWindowListRefresh := 1
+        }
         GoSub, RefreshWindowList
     }
+    SetTimer, CheckActiveWindow, 25
 return
 
 #If S.hotkeyReload()
@@ -220,7 +225,7 @@ return
     }
 #If
 
-SwitchBackToLastWindow:     
+SwitchBackToLastWindow:   
     currentWindowId := WinExist("A")
     if(lastActiveWindowId != currentWindowId) {
         SetTimer, CheckActiveWindow, Off
@@ -548,7 +553,7 @@ UpdateWindowArrays:
     }
 return
 
-RefreshWindowList: 
+RefreshWindowList:
     ; refresh the list of windows if necessary 
     filteredWindows.clear()
     if (dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
@@ -559,6 +564,7 @@ RefreshWindowList:
     }
     ;M sgBox, |%search%|
     allWindowsAndHistory := new WindowManager()
+    allWindowsAndHistory.enableDebug("allWindowsAndHistory")
     if(contentType = S.contentTypeTrayIcons()) {   
         allWindowsAndHistory.addArray(allTrayWindows.getArray())
         allWindowsAndHistory.sort()
@@ -567,7 +573,6 @@ RefreshWindowList:
         ;allWindowsAndHistory.sort()
     } else {
         allWindows.removeNonExistent()
-
         allWindowsAndHistory.addArray(allWindows.getArray())
         allWindowsAndHistory.sort()
         amount := allWindowsAndHistory.length()
@@ -576,9 +581,7 @@ RefreshWindowList:
 
         allWindowsAndHistory.addUniqueArrayAtTheBottom(windowHistory.getArray())
     }   
-
     amount := allWindowsAndHistory.length()
-
     minLength := 2
     if(contentType = S.contentTypeCommands()) {
         minLength := 3
@@ -586,8 +589,7 @@ RefreshWindowList:
     length := StrLen(search)
     Loop, %amount% 
     { 
-        targetIndex := amount - A_Index
-        window := allWindowsAndHistory.get(targetIndex)
+        window := allWindowsAndHistory.get(A_Index)
         title := window.getTitle()
         if(length >= minLength) {
             searchString := search
