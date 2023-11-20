@@ -37,7 +37,6 @@ commandWindows := commandFactory.create()
 ; this way we can keep track which window was active last
 highestRunIndex := 0
 
-
 ;---------------------------------------------------------------------- 
 ; 
 ; User configuration 
@@ -68,8 +67,7 @@ forceWindowListRefresh := 0
 
 lastActiveWindowId := 0
 activeWindowId := 0
-
-highestRunIndex := 0
+activeWindow := 0
 
 if S.useVirtualDesktops() = 1
 {
@@ -187,34 +185,36 @@ if shortcutslist <>
 } 
 
 windowIsOpen := 0
-
+checkActiveWindowInterval := 250
 Sleep, 100
 thm.Add(S.hotkey(), Func("mainTriggerKey"))
 
 ;forceWindowListRefresh := 1
 GoSub, UpdateWindowArrays
-SetTimer, CheckActiveWindow, 25
+SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
 
 #Include %A_ScriptDir%\includes\inc_gui.ahk
 return
 
 CheckActiveWindow:
     newWindowId := WinExist("A") 
+    WinGetClass, className, A
+    if(className = "tooltips_class32") {
+        return 
+    }
     if(newWindowId = switcher_id) {
         return
     }
     SetTimer, CheckActiveWindow, Off
     if(activeWindowId = 0 || newWindowId != activeWindowId) {        
-        highestRunIndex := highestRunIndex + 1
-        activeWindowId := newWindowId
-        newIndex := highestRunIndex
-        success := allWindows.increaseRunIndexForActiveWindow(activeWindowId, newIndex)
-        if(success = 0) {
-            forceWindowListRefresh := 1
-        }
-        GoSub, RefreshWindowList
+        /*
+        ToolTip, set new active window! %className% |||%activeWindowId%||| >%newWindowId%<
+        Sleep, 3000
+        ToolTip,
+        */
+        setActiveWindow(newWindowId)
     }
-    SetTimer, CheckActiveWindow, 25
+    SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
 return
 
 #If S.hotkeyReload()
@@ -234,14 +234,42 @@ SwitchBackToLastWindow:
             allWindows.storeMousePosForActiveWindow(currentWindowId)
             filteredWindows.storeMousePosForActiveWindow(currentWindowId)
         }
-        activeWindow := allWindows.getActiveWindow(lastActiveWindowId)
-        title := activeWindow.getTitle()
-        activeWindowId := lastActiveWindowId
-        lastActiveWindowId := currentWindowId
+        setActiveWindow(lastActiveWindowId)
         activeWindow.activate(S.moveMouse(), S.saveMousePos())
-        SetTimer, CheckActiveWindow, 250
+        Sleep, 10
+        SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
+        /*
+        title := activeWindow.getTitle()
+        window2 := allWindows.getWindowWithId(lastActiveWindowId)
+        title2 := window2.getTitle()
+        ToolTip, done %title% %title2%
+        */
+    } else {
+        /*
+        window := allWindows.getActiveWindow(currentWindowId)
+        title := activeWindow.getTitle()
+
+        window2 := allWindows.getWindowWithId(lastActiveWindowId)
+        title2 := window2.getTitle()
+        ToolTip, they match %lastActiveWindowId% %title% %title2%
+        */
     }
 return
+
+setActiveWindow(windowId) {
+    global allWindows, lastActiveWindowId, activeWindowId, activeWindow, highestRunIndex, forceWindowListRefresh
+    highestRunIndex := highestRunIndex + 1
+    lastActiveWindowId := activeWindowId
+    window := allWindows.getWindowWithId(lastActiveWindowId)
+    title := window.getTitle()
+    activeWindowId := windowId
+    activeWindow := allWindows.getWindowWithId(windowId)
+    success := allWindows.increaseRunIndexForActiveWindow(windowId, highestRunIndex)
+    if(success = 0) {
+        forceWindowListRefresh := 1
+    }
+    ;GoSub, RefreshWindowList
+}
 
 mainTriggerKey(isHold, taps, state) { 
 	;ToolTip % "1`n" (isHold ? "HOLD" : "TAP") "`nTaps: " taps "`nState: " state
@@ -465,6 +493,8 @@ UpdateWindowArrays:
             WinGetTitle, title, ahk_id %this_id% 
             ;M sgBox, %title%
             hwnd := id%A_Index%    
+            WinGetClass, className, ahk_id %this_id%
+
             desktopNum := 0        
             if S.useVirtualDesktops() = 1 
             {                
@@ -522,7 +552,7 @@ UpdateWindowArrays:
             
             }
             ;M sgBox, %title% %procname% 
-            allWindows.addIfNotExists(this_id, title, procname, desktopNum)           
+            allWindows.addIfNotExists(this_id, title, procname, desktopNum, "", 1, className)           
         }   
         /*
         DetectHiddenWindows, On

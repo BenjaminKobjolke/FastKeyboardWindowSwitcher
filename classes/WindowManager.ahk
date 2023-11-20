@@ -140,14 +140,17 @@ class WindowManager {
         return false      
     }
 
-    addIfNotExists(hwnd, title, processName, desktop, filePath := "", isRunning := 1) {
+    addIfNotExists(hwnd, title, processName, desktop, filePath := "", isRunning := 1, className := "") {
+        if(className = "tooltips_class32") {
+            return false
+        }
         ;M sgBox, the title is %title% --> do it!
         
         ; replace pipe (|) characters in the window title, 
         ; because Gui Add uses it for separating listbox items 
         StringReplace, title, title, |, -, all             
 
-        w := new WindowObject(hwnd, title, processName, desktop, filePath, isRunning)
+        w := new WindowObject(hwnd, title, processName, desktop, filePath, isRunning, className)
         if(this.hasWindow(w, 1)) {            
             return false
         }
@@ -155,7 +158,7 @@ class WindowManager {
         return true         
     }
 
-    addNew(hwnd, title, processName, desktop, filePath := "", isRunning := 1) {
+    addNew(hwnd, title, processName, desktop, filePath := "", isRunning := 1, className := "") {
         ;M sgBox, the title is %title% --> do it!
         
         ; replace pipe (|) characters in the window title, 
@@ -343,6 +346,18 @@ class WindowManager {
                 FileAppend, >%hdnw%< - %sortableTitle%`n, %debugFileName%
             }
         }
+    }
+
+    getWindowWithId(windowId) {
+        amount := this.windows.MaxIndex()
+        Loop, %amount%
+        {
+            window := this.windows[A_Index]
+            if(window.getHwnd() = windowId) {
+                return window
+            }
+        }
+        return 0
     }
 
     getActiveWindow(lastActiveWindowId) {

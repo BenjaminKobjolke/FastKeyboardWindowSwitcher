@@ -74,8 +74,9 @@ class XDListView {
         {
             window := filteredWindows.get(A_Index)
             title := window.getTitle()  
-            runIndex := window.getRunIndex()
-            title =  %runIndex% %title%
+            ; for debug you can add the runindex
+            ;runIndex := window.getRunIndex()
+            ;title =  %runIndex% %title%
             ;M sgBox, %title%    
             counter := 3
             process_name := ""

@@ -5,7 +5,7 @@ class WindowObject {
     processName :=
     desktop :=
     filePath := 
-
+    className :=
     isRunning := 1
 
     isMouseSaved := 0
@@ -15,13 +15,14 @@ class WindowObject {
     ; the index will increase everyt time the window is in focus
     runIndex := 0
 
-    __New(hwnd, title, processName, desktop, filePath = "", isRunning = 1) {
+    __New(hwnd, title, processName, desktop, filePath = "", isRunning = 1, className = "") {
         ;MsgBox, %hwnd% %title% %processName% %desktop% %filePath%
         this.title := title
         
         this.isRunning := isRunning
         
         this.hwnd := hwnd
+        this.className := className
         if(hwnd = -1) {
             ;M sgBox, creating new Window %hwnd%
             ;M sgBox, %filePath%
@@ -38,6 +39,9 @@ class WindowObject {
 
     }
 
+    getClassName() {
+        return this.className
+    }
     getRunIndexAndTitle() {
         titleString := this.getTitle()
         StringReplace, titleString, titleString, +, , All
@@ -101,10 +105,10 @@ class WindowObject {
     }
 
     activate(moveMouse = 1, restoreMosePos = 1) {
-        ;title := window.getTitle()
+        title := this.getTitle()
         window_id := this.getHwnd()
         isRunning := this.getIsRunning()
-        ;MsgBox, 1 %title% 2 %isHistory% 3 %window_id% 4 %isRunning%
+        ;ToolTip, 1 %title% 2 %isHistory% 3 %window_id% 4 %isRunning%
 
         if(isRunning = 0) {
             filePath := this.getFilePath()
@@ -132,7 +136,7 @@ class WindowObject {
                 winTools.moveMouseToCurrentWindowCenter() 
             }
         }
-
+        ;ToolTip, is active now %title%
         return true
     }
 
