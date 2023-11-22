@@ -104,9 +104,10 @@ class WindowObject {
         ;MsgBox % "Added new window " . OutputVar
     }
 
-    activate(moveMouse = 1, restoreMosePos = 1) {
+    activate(moveMouse = 1, restoreMousePos = 1) {
         title := this.getTitle()
         window_id := this.getHwnd()
+
         isRunning := this.getIsRunning()
         ;ToolTip, 1 %title% 2 %isHistory% 3 %window_id% 4 %isRunning%
 
@@ -129,7 +130,7 @@ class WindowObject {
         WinActivate, ahk_id %window_id% 
 
         if(moveMouse = 1) {
-            if(restoreMosePos = 1) {
+            if(restoreMousePos = 1) {
                 this.restoreMousePos()
             } else {
                 winTools := new WinTools()

@@ -1036,7 +1036,6 @@ ActivateWindow:
     }
 
     title := window.getTitle()
-    ;M sgBox, %title% %selectedIndex%
     if(contentType = S.contentTypeCommands()) {
         ;index := selectedIndex - 1
         commandWindow := filteredWindows.get(selectedIndex)
@@ -1044,7 +1043,23 @@ ActivateWindow:
         ;M sgBox, %commandString%
         activateStatus := 1
     } else {
+        isRunning := window.getIsRunning()
+        if(isRunning = 1) {
+            ; make sure the window is running
+            window_id := window.getHwnd()
+            If !WinExist("ahk_id " . window_id)
+            {
+                window.setIsRunning(0)
+                isRunning := 0
+            }
+        }
         activateStatus := window.activate(S.moveMouse(), S.saveMousePos())
+
+        if(isRunning = 0) {
+            ;filePath := window.getFilePath()            
+            ;windowHistory.removeElementWithFilePath(filePath)
+            GoSub, UpdateWindowArrays
+        }
     }
 
     if(activateStatus = 1) {   
