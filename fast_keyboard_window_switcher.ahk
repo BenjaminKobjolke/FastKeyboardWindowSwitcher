@@ -247,6 +247,9 @@ SwitchBackToLastWindow:
             filteredWindows.storeMousePosForActiveWindow(currentWindowId)
         }
         setActiveWindow(lastActiveWindowId)
+        ToolTip, switch back to last window
+        Sleep, 1000
+        ToolTip,
         activeWindow.activate(S.moveMouse(), S.saveMousePos())
         Sleep, 10
         SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
@@ -718,6 +721,7 @@ RefreshWindowList:
       return
     } 
 
+
     if amount = 1 
         if autoActivateIfOnlyOne 
         { 
@@ -737,8 +741,11 @@ RefreshWindowList:
                         if(counter > maxIdleCounter) {
                             break
                         }
-                    }            
-                    GoSub, ActivateWindow 
+                    }           
+                    if guiActive = 1 
+                    {
+                        GoSub, ActivateWindow 
+                    } 
                 }
             }
         } 
