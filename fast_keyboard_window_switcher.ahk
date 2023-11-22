@@ -175,7 +175,7 @@ if shortcutslist <>
         val = %cArray2%
         shortcuts[index, 1] := val
         ;d.Push(2)
-        ;M sgBox, %d%
+        ;M sgBox, %d%dd
         ;c.Push(d)
         index := index + 1 
        
@@ -193,7 +193,19 @@ thm.Add(S.hotkey(), Func("mainTriggerKey"))
 GoSub, UpdateWindowArrays
 SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
 
+;SetTimer, DebugShowGui, 1000
 #Include %A_ScriptDir%\includes\inc_gui.ahk
+
+return
+
+DebugShowGui:
+    GoSub, CloseGui
+    SetTimer, DebugShowGui, Off
+    GoSub, RefreshWindowList
+    GoSub, UpdateGui
+    Sleep, 100      
+    forceWindowListRefresh := 0
+    GoSub, DebugShowGui
 return
 
 CheckActiveWindow:
@@ -333,7 +345,6 @@ HotkeyAction:
         return
     }    
     search = 
-    numallwin = 0 
     if(S.alwaysStartWithTasks())  {
         if(contentType = S.contentTypeTrayIcons()) {
             forceWindowListRefresh = 1
@@ -551,6 +562,7 @@ UpdateWindowArrays:
                 }
             
             }
+
             ;M sgBox, %title% %procname% 
             allWindows.addIfNotExists(this_id, title, procname, desktopNum, "", 1, className)           
         }   
@@ -580,6 +592,7 @@ UpdateWindowArrays:
         }
         DetectHiddenWindows, Off
         */
+        numallwin := allWindows.length()
     }
 return
 
@@ -617,6 +630,11 @@ RefreshWindowList:
         minLength := 3
     }
     length := StrLen(search)
+    if(amount < 1) {
+        ToolTip, no windows?
+        Sleep, 1000,
+        ToolTip,
+    }
     Loop, %amount% 
     { 
         window := allWindowsAndHistory.get(A_Index)
