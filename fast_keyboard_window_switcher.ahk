@@ -24,6 +24,7 @@ S := new Settings()
 
 thm := new TapHoldManager(S.tapTime(),500,2)
 
+; those are the windows that you want to permanently remember, even if the application is closed
 windowHistory := new WindowHistory()
 
 filteredWindows := new WindowManager()
@@ -208,6 +209,7 @@ DebugShowGui:
     GoSub, DebugShowGui
 return
 
+
 CheckActiveWindow:
     newWindowId := WinExist("A") 
     WinGetClass, className, A
@@ -247,7 +249,8 @@ SwitchBackToLastWindow:
             filteredWindows.storeMousePosForActiveWindow(currentWindowId)
         }
         setActiveWindow(lastActiveWindowId)
-        ToolTip, switch back to last window
+        title := activeWindow.getTitle()
+        ToolTip, switch back to last window %title%
         Sleep, 1000
         ToolTip,
         activeWindow.activate(S.moveMouse(), S.saveMousePos())
@@ -624,6 +627,7 @@ RefreshWindowList:
         amount := allWindowsAndHistory.length()
         ;windowHistory.sort()
         allWindowsAndHistory.addUniqueArrayAtTheBottom(windowHistory.getArray())
+        ;allWindowsAndHistory.sort()
     }   
     amount := allWindowsAndHistory.length()
     minLength := 3

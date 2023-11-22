@@ -70,6 +70,11 @@ class XDListView {
         counter := 1
         
         ;M sgBox, > %amount%
+        if(amount < 1) {
+            ToolTip, No filtered windows found
+            Sleep, 1000
+            ToolTip
+        }
         Loop %amount%
         {
             window := filteredWindows.get(A_Index)

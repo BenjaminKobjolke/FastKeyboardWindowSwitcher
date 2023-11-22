@@ -244,8 +244,8 @@ class WindowManager {
             window := newArray[A_Index]
             filePath := window.getFilePath()
             if(!this.hasFilePath(filePath)) {
-                ;this.windows.Push(window)
-                this.Array_Unshift(this.windows, window)
+                this.windows.Push(window)
+                ;this.Array_Unshift(this.windows, window)
             } else {
                 ;M sgBox % "Already has file path " . filePath
             }
