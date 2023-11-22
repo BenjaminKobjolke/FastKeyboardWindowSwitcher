@@ -280,7 +280,7 @@ setActiveWindow(windowId) {
     if(success = 0) {
         forceWindowListRefresh := 1
     }
-    ;GoSub, RefreshWindowList
+    GoSub, RefreshWindowList
 }
 
 mainTriggerKey(isHold, taps, state) { 
@@ -617,19 +617,17 @@ RefreshWindowList:
     } else {
         allWindows.removeNonExistent()
         allWindowsAndHistory.addArray(allWindows.getArray())
-        allWindowsAndHistory.sort()
+        ;allWindowsAndHistory.sort()
         amount := allWindowsAndHistory.length()
-
-        windowHistory.sort()
-
+        ;windowHistory.sort()
         allWindowsAndHistory.addUniqueArrayAtTheBottom(windowHistory.getArray())
     }   
     amount := allWindowsAndHistory.length()
-    minLength := 2
+    minLength := 3
     if(contentType = S.contentTypeCommands()) {
         minLength := 3
     }
-    length := StrLen(search)
+    typedLength := StrLen(search)
     if(amount < 1) {
         ToolTip, no windows?
         Sleep, 1000,
@@ -639,7 +637,7 @@ RefreshWindowList:
     { 
         window := allWindowsAndHistory.get(A_Index)
         title := window.getTitle()
-        if(length >= minLength) {
+        if(typedLength >= minLength) {
             searchString := search
             if(contentType = S.contentTypeCommands()) {
                 ;remove the : at the start
@@ -697,6 +695,7 @@ RefreshWindowList:
     selectedIndex := 1
     ; if the pattern didn't match any window 
     if amount = 0 
+    {
         ; if the search string is empty then we can't do much 
         if search = 
         { 
@@ -711,6 +710,7 @@ RefreshWindowList:
             GoSub, DeleteSearchChar 
             return 
         } 
+    }    
     
     xdListView.updateRows(filteredWindows, allWindows, windowHistory, contentType)
 
