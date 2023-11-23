@@ -115,7 +115,7 @@ class XDListView {
     
             counter++  
         }
-
         this.updateColors(filteredWindows, contentType)
+        return amount
     }
 }

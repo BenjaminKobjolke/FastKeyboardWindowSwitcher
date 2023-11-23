@@ -185,7 +185,7 @@ if shortcutslist <>
     amountOfShortcuts := index 
 } 
 
-windowIsOpen := 0
+_hotKeyActionInProgress := 0
 checkActiveWindowInterval := 250
 Sleep, 100
 thm.Add(S.hotkey(), Func("mainTriggerKey"))
@@ -250,9 +250,11 @@ SwitchBackToLastWindow:
         }
         setActiveWindow(lastActiveWindowId)
         title := activeWindow.getTitle()
+        /*
         ToolTip, switch back to last window %title%
         Sleep, 1000
         ToolTip,
+        */
         activeWindow.activate(S.moveMouse(), S.saveMousePos())
         Sleep, 10
         SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
@@ -263,6 +265,7 @@ SwitchBackToLastWindow:
         ToolTip, done %title% %title2%
         */
     } else {
+        ToolTip, no need to switch back
         /*
         window := allWindows.getActiveWindow(currentWindowId)
         title := activeWindow.getTitle()
@@ -290,10 +293,14 @@ setActiveWindow(windowId) {
 }
 
 mainTriggerKey(isHold, taps, state) { 
-	;ToolTip % "1`n" (isHold ? "HOLD" : "TAP") "`nTaps: " taps "`nState: " state
     if (isHold) {
         return
     }
+    if(_hotKeyActionInProgress = 1) {
+        return
+    }
+    _hotKeyActionInProgress := 1
+	;ToolTip % "1`n" (isHold ? "HOLD" : "TAP") "`nTaps: " taps "`nState: " state
     global guiActive
     if(taps = 2) {
        GoSub, SwitchBackToLastWindow
@@ -305,6 +312,7 @@ mainTriggerKey(isHold, taps, state) {
             GoSub, HotkeyAction
         }
     }
+    _hotKeyActionInProgress := 0
 }
 
 /*
@@ -622,6 +630,7 @@ RefreshWindowList:
         ;allWindowsAndHistory.sort()
     } else {
         allWindows.removeNonExistent()
+        amountAllWindows := allWindows.length()
         allWindowsAndHistory.addArray(allWindows.getArray())
         ;allWindowsAndHistory.sort()
         amount := allWindowsAndHistory.length()
@@ -629,20 +638,23 @@ RefreshWindowList:
         allWindowsAndHistory.addUniqueArrayAtTheBottom(windowHistory.getArray())
         ;allWindowsAndHistory.sort()
     }   
-    amount := allWindowsAndHistory.length()
+    amountAllWindowsAndHistory := allWindowsAndHistory.length()
     minLength := 3
     if(contentType = S.contentTypeCommands()) {
         minLength := 3
     }
     typedLength := StrLen(search)
-    if(amount < 1) {
+    /*
+    if(amount < 3) {
         ToolTip, no windows?
         Sleep, 1000,
         ToolTip,
     }
-    Loop, %amount% 
+    */
+    Loop, %amountAllWindowsAndHistory% 
     { 
         window := allWindowsAndHistory.get(A_Index)
+        
         title := window.getTitle()
         if(typedLength >= minLength) {
             searchString := search
@@ -719,8 +731,21 @@ RefreshWindowList:
         } 
     }    
     
-    xdListView.updateRows(filteredWindows, allWindows, windowHistory, contentType)
-
+    amountBefore := amount
+    amount := xdListView.updateRows(filteredWindows, allWindows, windowHistory, contentType)
+    searchStringLength := StrLen(searchString)
+    /*
+    if(amount < 3) {
+        originalAmount := filteredWindows.length()
+        FileAppend, amountAllWindows: %amountAllWindows%`r, logs/log.txt
+        FileAppend, amountAllWindowsAndHistory: %amountAllWindowsAndHistory%`r, logs/log.txt
+        FileAppend, amountBefore: %amountBefore%`r, logs/log.txt
+        FileAppend, amount: %amount%`r, logs/log.txt
+        FileAppend, originalAmount: %originalAmount%`r, logs/log.txt
+        FileAppend, ----------------------------------`r, logs/log.txt
+    }
+    */
+    
     if(noWindowsFound) {
       return
     } 

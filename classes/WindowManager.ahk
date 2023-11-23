@@ -104,20 +104,17 @@ class WindowManager {
     removeNonExistent() {
         WinGet, windowlist, list, , , Program Manager 
         
-        i := 1
-        while i <= this.windows.MaxIndex()
-        {
+        maxIndex := this.windows.MaxIndex()
+        Loop, %maxIndex% {
+            i := maxIndex + 1 - A_Index  ; Iterate backwards
             window := this.windows[i]
             window_id := window.getHwnd()
-            if(!this.windowWithIdExists(windowlist, window_id)) {
+            if (!this.windowWithIdExists(windowlist, window_id)) {
                 this.windows.RemoveAt(i)
-                i := i - 1
-            } else {
-                i := i + 1
             }
-        }    
+        }
     }
-    
+
     windowWithIdExists(windowlist, window_id) {
         Loop, %windowlist% 
         {               
