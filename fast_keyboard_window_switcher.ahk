@@ -565,14 +565,13 @@ UpdateWindowArrays:
                 if filtered = yes 
                     continue 
             } 
-
             ; show process name if enabled 
-            if S.showProcessName() || S.addProcessNameToWindowTitle()
+            if S.showProcessName() || S.addProcessNameToTitle()
             { 
                 procname := allWindows.getProcessName(this_id)
                 if S.addProcessNameToTitle()
                 {
-                    title = %title% (%procname%)
+                    title = %procname% - %title%
                 }
             
             }

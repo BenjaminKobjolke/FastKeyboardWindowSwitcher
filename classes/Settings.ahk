@@ -138,7 +138,7 @@ class Settings {
     }
 
     addProcessNameToTitle() {
-        return this.getBool("setttings", "addProcessNameToWindowTitle", 0)
+        return this.getBool("settings", "addProcessNameToTitle", 0)
     }
 
     showProcessName() {
