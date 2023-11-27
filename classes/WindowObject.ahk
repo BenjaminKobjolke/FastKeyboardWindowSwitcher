@@ -84,6 +84,10 @@ class WindowObject {
         return this.title
     }
 
+    setTitle(value) {
+        this.title := value
+    }
+
     getProcessName() {
         return this.processName
     }

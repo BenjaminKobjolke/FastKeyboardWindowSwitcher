@@ -284,7 +284,10 @@ setActiveWindow(windowId) {
     window := allWindows.getWindowWithId(lastActiveWindowId)
     title := window.getTitle()
     activeWindowId := windowId
+    WinGetTitle, title, ahk_id %activeWindowId% 
     activeWindow := allWindows.getWindowWithId(windowId)
+    ; the title might have changed, so we need to update it
+    activeWindow.setTitle(title)
     success := allWindows.increaseRunIndexForActiveWindow(windowId, highestRunIndex)
     if(success = 0) {
         forceWindowListRefresh := 1
@@ -1091,6 +1094,9 @@ ActivateWindow:
         guiActive := 0 
         lastActiveWindowId := activeWindowId
         activeWindowId := window.getHwnd()
+        ; title might have changed
+        WinGetTitle, title, ahk_id %activeWindowId%         
+        window.setTitle(title)
         return
     } else {
         forceWindowListRefresh = 1
