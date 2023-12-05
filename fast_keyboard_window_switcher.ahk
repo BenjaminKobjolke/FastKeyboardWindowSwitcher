@@ -225,8 +225,9 @@ CheckActiveWindow:
         ToolTip, set new active window! %className% |||%activeWindowId%||| >%newWindowId%<
         Sleep, 3000
         ToolTip,
-        */
+        */        
         setActiveWindow(newWindowId)
+        ;GoSub, UpdateWindowArrays
     }
     SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
 return
