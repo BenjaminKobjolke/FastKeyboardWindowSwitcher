@@ -6,6 +6,8 @@ command := A_Args[1]
 if (command == "exit") 
 {
 	ExitApp
+} else if (command == "reload") {
+    Reload
 }
 
 If Not A_IsAdmin {
@@ -1068,8 +1070,15 @@ ActivateWindow:
         ;index := selectedIndex - 1
         commandWindow := filteredWindows.get(selectedIndex)
         handler := new CommandHandler(commandWindow)
+        done := handler.getIsDone()
+        if(done = 1) {
+            return
+        }
+        subRoutine := handler.getSubRoutine()
+        GoSub, %subRoutine%
         ;M sgBox, %commandString%
-        activateStatus := 1
+        activateStatus := 0
+        contentType := S.contentTypeAllWindows()
     } else {
         isRunning := window.getIsRunning()
         if(isRunning = 1) {
