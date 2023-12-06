@@ -5,9 +5,10 @@ class CommandFactory {
     __New() {
 
         this.commands := Array()
-
+        /*
         command := new CommandObject("updatewindowarray", "Update Window Array", "updatewindowarray")
         this.commands.push(command)
+        */
         ;command1 := new CommandObject("help", "Show help screen", "showHelp")
         ;this.commands.push(command1)
         command := new CommandObject("reload", "Reload", "reload")

@@ -1107,6 +1107,7 @@ ActivateWindow:
         ; title might have changed
         WinGetTitle, title, ahk_id %activeWindowId%         
         window.setTitle(title)
+        GoSub, UpdateWindowArrays
         return
     } else {
         forceWindowListRefresh = 1

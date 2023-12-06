@@ -7,9 +7,11 @@ class CommandHandler {
         commandID := windowObject.getHwnd()
         ;M sgBox, %commandID%
         switch commandID {
+            /*
             case "updatewindowarray":
                 this.isDone := false
                 this.subRoutine := "UpdateWindowArrays"
+            */
             case "reload":
                 this.isDone := true
                 Reload
