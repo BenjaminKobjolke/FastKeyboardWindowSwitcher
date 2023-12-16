@@ -1,1 +1,3 @@
-asticky|blackbox|app center
+asticky
+blackbox
+app center

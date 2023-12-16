@@ -53,10 +53,6 @@ Window transparency.
 Default is 180.
 Values between 0 and 255 to indicate the degree of transparency. 0 makes the window invisible while 255 makes it opaque.
 
-## Special configuration files
-
-If you want to ignore some windows
-reanme filterlist_example.txt to filterlist.txt and add the windows' titles that you dont want like this "firefox|chrome|winamp"
 
 ![plot](./media/demo.gif)
 
@@ -90,10 +86,18 @@ Mouse will be moved to the center of the selected window
 
 ### Filter list
 
-Array of filters for filtering out titles from the window list.
+If you want to ignore some windows (and not show up in the window list)
 
-Rename filterlist_example.txt to filterlist.txt and add the windows you do not want to show up to that list.
-Seperate titles with a "|".
+- copy filterlist_example.txt to filterlist.txt
+- add the window title to the list
+- each window title should be on a new line
+- partial matches are possible.
+
+Example:
+```
+Chrome
+Firefox
+```
 
 ### Shortcuts list
 
@@ -169,7 +173,7 @@ Reload the window list with
 
 ### 18.05.2023
 
-_Search in process name_
+#### Search in process name
 
 In settings.ini activate the following setting:
 
@@ -190,7 +194,7 @@ which is enabled by default.
 
 ### 22.05.2023
 
-_Do not trigger hotkey for window title_
+#### Do not trigger hotkey for window title
 
 There might be windows you do not want the hotkey to be triggered for.
 For example you have the tool running on your local computer and you are also using it via remote desktop.
@@ -199,14 +203,19 @@ Pressing the hotkey then triggers the tool on your local computer and also on th
 To prevent this you can add the window title to the following list:
 
 - copy list_do_not_trigger_example.txt to list_do_not_trigger.txt
-- add the window title to the list seperated by a "|". Partial matches are possible.
+- add the window title to the list
+- each window title should be on a new line
+- partial matches are possible.
 
 Example:
-remote|AnyDesk
+```
+remote
+AnyDesk
+```
 
 ### 24.05.2023
 
-_Configuration via ":" / "."_
+#### Configuration via ":" / "."
 
 Type ":" or "." as the first character to show a list of availble commands / options.
 

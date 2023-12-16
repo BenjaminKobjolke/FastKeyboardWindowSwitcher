@@ -1,1 +1,3 @@
-remote|AnyDesk
+Remote Desktop
+AnyDesk
+Rustdesk

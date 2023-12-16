@@ -17,7 +17,7 @@ If Not A_IsAdmin {
 
 #Include %A_ScriptDir%\includes\includes.ahk
 
-filtersList := new FilterLists()
+filtersListShouldNotTrigger := new FilterLists("list_do_not_trigger.txt")
 
 ;commandList := commandFactory.create()
 A := new biga()
@@ -86,8 +86,7 @@ if S.useVirtualDesktops() = 1
 ; from the list of windows. 
 ; list is loaded from file filterlist.txt
 ; example asticky|blackbox|app center
-FileRead, filterlist, filterlist.txt
-
+filtersListShouldNotDisplay := new FilterLists("filterlist.txt")
 ; List of shortcuts for window titles
 ; one shortcut per line
 ; example: tb|thunderbird
@@ -149,6 +148,7 @@ if (!a_iscompiled) {
 
 AutoTrim, off 
 
+/*
 if filterlist <> 
 { 
     loop, parse, filterlist, | 
@@ -156,6 +156,7 @@ if filterlist <>
         filters%a_index% = %A_LoopField% 
     } 
 } 
+*/
 
 shortcuts := []   
 amountOfShortcuts := 0
@@ -359,7 +360,7 @@ return
 */
 HotkeyAction:    
     WinGetTitle, title, A
-    shouldNotTrigger := filtersList.shouldNotTriggerForWindow(title)
+    shouldNotTrigger := filtersListShouldNotTrigger.shouldNotTriggerForWindow(title)
     if shouldNotTrigger
     {
         return
@@ -551,26 +552,10 @@ UpdateWindowArrays:
                 continue 
 
             ; don't add titles which match any of the filters 
-            if filterlist <> 
-            { 
-                filtered = 
-
-                loop 
-                { 
-                    stringtrimright, filter, filters%a_index%, 0 
-                    if filter = 
-                    break 
-                    else 
-                        ifinstring, title, %filter% 
-                        { 
-                            filtered = yes 
-                            break 
-                        } 
-                } 
-
-                if filtered = yes 
-                    continue 
-            } 
+            shouldBeFiltered := filtersListShouldNotDisplay.shouldNotTriggerForWindow(title)
+            if shouldBeFiltered
+                continue
+            
             ; show process name if enabled 
             if S.showProcessName() || S.addProcessNameToTitle()
             { 

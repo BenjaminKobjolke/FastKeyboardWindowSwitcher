@@ -3,27 +3,27 @@ class FilterLists {
     doNotTriggerList := []
     amountOfDoNotTrigger := 0
 
-    __New() {
+    __New(filename) {
 
         ; List of windows for which the hotkey will not trigger
-        FileRead, list_do_not_trigger, list_do_not_trigger.txt
+        FileRead, list_do_not_trigger, %filename%
         doNotTriggerList := []   
         this.amountOfDoNotTrigger := 0
         if list_do_not_trigger <> 
         { 
             index := 0
-            loop, parse, list_do_not_trigger, `n, `r
-            { 
-                ;d := [] 
-                ;shortcuts%a_index% = %A_LoopField% 
-                
-                ;M sgBox, %A_LoopField% 
-                StringSplit, cArray, A_LoopField, |                 
-                val = %cArray1%
-                ;M sgBox, %val%                                
-                this.doNotTriggerList[index] := val                
-                index := index + 1             
-            } 
+			Loop, Parse, list_do_not_trigger, `n, `r
+			{
+				StringSplit, cArray, A_LoopField, |  ; Split the line into parts separated by |
+
+				Loop, % cArray0  ; cArray0 contains the number of elements in cArray
+				{
+					val := cArray%A_Index%  ; Get each element
+					;M sgBox, %val%
+					this.doNotTriggerList[index] := val
+					index := index + 1
+				}
+			}
 
             this.amountOfDoNotTrigger := index 
         }         
