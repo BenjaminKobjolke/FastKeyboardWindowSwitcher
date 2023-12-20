@@ -720,6 +720,8 @@ RefreshWindowList:
             return 
         } 
     }    
+
+    filteredWindows.removeNonExistent()
     
     amountBefore := amount
     amount := xdListView.updateRows(filteredWindows, allWindows, windowHistory, contentType)
@@ -1012,6 +1014,8 @@ return
 ; Activate selected window 
 ; 
 ActivateWindow:
+    ;Gui, Submit
+    ;return
     window := filteredWindows.get(selectedIndex)
     if(contentType = S.contentTypeTrayIcons()) {     
         window_id := window.getHwnd()
