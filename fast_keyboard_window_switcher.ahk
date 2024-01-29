@@ -237,7 +237,7 @@ return
 
 #If S.hotkeyReload()
     if(!A_IsCompiled) {            
-        #y::                
+        #!y::                
             reload
         return              
     }
