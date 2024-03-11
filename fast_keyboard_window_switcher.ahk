@@ -244,58 +244,49 @@ return
 #If
 
 SwitchBackToLastWindow:   
+    SetTimer, CheckActiveWindow, Off
+     
     currentWindowId := WinExist("A")
-    if(lastActiveWindowId != currentWindowId) {
-        SetTimer, CheckActiveWindow, Off
-        
-        if(S.saveMousePos()) {
-            allWindows.storeMousePosForActiveWindow(currentWindowId)
-            filteredWindows.storeMousePosForActiveWindow(currentWindowId)
-        }
-        setActiveWindow(lastActiveWindowId)
-        title := activeWindow.getTitle()
-        /*
-        ToolTip, switch back to last window %title%
-        Sleep, 1000
-        ToolTip,
-        */
-        activeWindow.activate(S.moveMouse(), S.saveMousePos())
+    if(S.saveMousePos()) {
+        allWindows.storeMousePosForActiveWindow(currentWindowId)
+        filteredWindows.storeMousePosForActiveWindow(currentWindowId)
+    }   
+    
+    Send, !{Tab}
+    newWindowId := WinExist("A")
+    while(newWindowId = currentWindowId) {
         Sleep, 10
-        SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
-        /*
-        title := activeWindow.getTitle()
-        window2 := allWindows.getWindowWithId(lastActiveWindowId)
-        title2 := window2.getTitle()
-        ToolTip, done %title% %title2%
-        */
-    } else {
-        ToolTip, no need to switch back
-        /*
-        window := allWindows.getActiveWindow(currentWindowId)
-        title := activeWindow.getTitle()
-
-        window2 := allWindows.getWindowWithId(lastActiveWindowId)
-        title2 := window2.getTitle()
-        ToolTip, they match %lastActiveWindowId% %title% %title2%
-        */
+        newWindowId := WinExist("A")
+        ;T oolTip, %newWindowId% %currentWindowId%
     }
+    Sleep, 100
+    currentWindowId := WinExist("A")
+    setActiveWindow(currentWindowId)
+    activeWindow.activate(S.moveMouse(), S.saveMousePos())
+    SetTimer, CheckActiveWindow, %checkActiveWindowInterval%
+    _hotKeyActionInProgress := 0
+    
 return
 
 setActiveWindow(windowId) {
     global allWindows, lastActiveWindowId, activeWindowId, activeWindow, highestRunIndex, forceWindowListRefresh
     highestRunIndex := highestRunIndex + 1
     lastActiveWindowId := activeWindowId
-    window := allWindows.getWindowWithId(lastActiveWindowId)
-    title := window.getTitle()
+    ;window := allWindows.getWindowWithId(lastActiveWindowId)
+    ;title := window.getTitle()
     activeWindowId := windowId
     WinGetTitle, title, ahk_id %activeWindowId% 
     activeWindow := allWindows.getWindowWithId(windowId)
     ; the title might have changed, so we need to update it
     activeWindow.setTitle(title)
+    class_name := activeWindow.getClassName()
+    ;T oolTip, >%activeWindowId%< title: %title% class: %class_name%
     success := allWindows.increaseRunIndexForActiveWindow(windowId, highestRunIndex)
-    if(success = 0) {
+    ;MsgBox, Success: %success%
+    ;if(success = 0) {
         forceWindowListRefresh := 1
-    }
+    ;}
+    ;MsgBox, aha! %forceWindowListRefresh%
     GoSub, RefreshWindowList
 }
 
@@ -1084,6 +1075,8 @@ ActivateWindow:
         }
     }
 
+    forceWindowListRefresh = 1
+
     if(activateStatus = 1) {   
         Gui, Submit    
         guiActive := 0 
@@ -1095,7 +1088,6 @@ ActivateWindow:
         GoSub, UpdateWindowArrays
         return
     } else {
-        forceWindowListRefresh = 1
         GoSub, HotkeyAction
     }
 return 
