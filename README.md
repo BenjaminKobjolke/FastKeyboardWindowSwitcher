@@ -80,6 +80,22 @@ reload the window list
 
 ## New features addded:
 
+#### Preview Mode
+
+Holding down shift while the gui is open will show the selected window in the background.
+
+Example: 
+
+- type chrome to filter the list and only show all open chrome windows.
+
+- hold down shift
+
+- use the up and down arrow keys to navigate through the list
+
+the selected chrome task will be shown but it will not be the activate window.
+As long as you hold down shift you can continue to use the up and down arrow keys to cycle through the list.
+When you release shift the currently previewed window will be activate.
+
 ### Move mouse
 
 Mouse will be moved to the center of the selected window
