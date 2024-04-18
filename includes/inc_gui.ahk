@@ -102,6 +102,7 @@ CheckIfGuiStillActive:
     } else {
         if (shiftPressed = 1) {
             shiftPressed := 0
+            ToolTip,
             ;ToolTip, shift released %switcher_id%
             /*
             SW_RESTORE := 9
