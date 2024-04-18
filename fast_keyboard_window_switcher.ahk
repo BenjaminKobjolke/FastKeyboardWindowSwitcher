@@ -23,7 +23,7 @@ filtersListShouldNotTrigger := new FilterLists("list_do_not_trigger.txt")
 A := new biga()
 trayControl := new TrayControl()
 S := new Settings()
-
+searchMinLength := S.searchMinLength()
 thm := new TapHoldManager(S.tapTime(),500,2)
 
 ; those are the windows that you want to permanently remember, even if the application is closed
@@ -633,7 +633,7 @@ RefreshWindowList:
         ;allWindowsAndHistory.sort()
     }   
     amountAllWindowsAndHistory := allWindowsAndHistory.length()
-    minLength := 3
+    minLength := searchMinLength
     if(contentType = S.contentTypeCommands()) {
         minLength := 3
     }

@@ -53,7 +53,6 @@ Window transparency.
 Default is 180.
 Values between 0 and 255 to indicate the degree of transparency. 0 makes the window invisible while 255 makes it opaque.
 
-
 ![plot](./media/demo.gif)
 
 I found the original script here:
@@ -84,7 +83,7 @@ reload the window list
 
 Holding down shift while the gui is open will show the selected window in the background.
 
-Example: 
+Example:
 
 - type chrome to filter the list and only show all open chrome windows.
 
@@ -110,6 +109,7 @@ If you want to ignore some windows (and not show up in the window list)
 - partial matches are possible.
 
 Example:
+
 ```
 Chrome
 Firefox
@@ -123,6 +123,10 @@ So if you type "wa" it will search for winamp.
 Rename shortcuts_example.txt to shortcutslist.txt and add the windows you do not want to show up to that list.
 One shortcut per line
 Example: wa|winamp
+
+### 18.04.2024 - Preview Mode
+
+e
 
 ### 24.03.2023 - search min length
 
@@ -224,6 +228,7 @@ To prevent this you can add the window title to the following list:
 - partial matches are possible.
 
 Example:
+
 ```
 remote
 AnyDesk

@@ -123,7 +123,7 @@ class Settings {
     }
 
     searchMinLength() {
-        return this.getString("settings", "searchminlength", 1)
+        return this.getString("settings", "searchminlength", 3)
     }
 
     alwaysStartWithTasks() {
