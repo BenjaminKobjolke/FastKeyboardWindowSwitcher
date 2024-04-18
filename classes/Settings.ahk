@@ -82,6 +82,10 @@ class Settings {
         return this.getString("gui", "textSize", "20")
     }
 
+    guiStatusBarFontSize() {
+        return this.getString("gui", "statusBarFontSize", "12")
+    }
+
     guiTransparency() {
         return this.getString("gui", "transparency", "180")
     }

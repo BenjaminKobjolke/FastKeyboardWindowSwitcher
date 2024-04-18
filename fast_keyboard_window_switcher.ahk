@@ -72,6 +72,7 @@ lastActiveWindowId := 0
 activeWindowId := 0
 activeWindow := 0
 
+shiftPressed := 0
 if S.useVirtualDesktops() = 1
 {
     DetectHiddenWindows On
@@ -368,127 +369,136 @@ HotkeyAction:
     GoSub, RefreshWindowList
     GoSub, UpdateGui
 
-    Loop 
-    {
-        if guiActive = 0 
-        {
-            break 
-        }  
-        Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
-
-        if ErrorLevel = EndKey:enter 
-        { 
-            GoSub, ActivateWindow             
-            break 
-        } 
-
-        if ErrorLevel = EndKey:escape 
-        { 
-            GoSub, CloseGui 
-            break
-        } 
-
-        if ErrorLevel = EndKey:backspace 
-        { 
-            GoSub, DeleteSearchChar 
-            continue 
-        } 
-
-        if ErrorLevel = EndKey:up 
-        {         
-            Send, {up} 
-            continue 
-        } 
-
-        if ErrorLevel = EndKey:down 
-        { 
-            Send, {down} 
-            continue 
-        } 
-
-        if ErrorLevel = EndKey:pgup 
-        { 
-            Send, {pgup} 
-            continue 
-        } 
-
-        if ErrorLevel = EndKey:pgdn 
-        { 
-            Send, {pgdn} 
-            continue 
-        }  
-        
-        if ErrorLevel = EndKey:tab 
-            if completion = 
-                continue 
-            else 	
-                input = %completion% 
-
-        ; invoke digit shortcuts if applicable 
-        if S.digitShortcuts() <> 
-            if numwin <= 10 
-                if input in 1,2,3,4,5,6,7,8,9,0 
-                { 
-                    if input = 0 
-                        input = 10  
-
-                    if numwin < %input% 
-                    { 
-                        if nomatchsound <> 
-                            SoundPlay, %nomatchsound% 
-                        continue 
-                    } 
-
-                    ;T oolTip, %input%
-                    ;GuiControl, choose, indexListView, %input%                     
-                    selectedIndex = %input%
-                    GoSub, ActivateWindow 
-                    break 
-                } 
-
-        ; process typed character 
-
-        search = %search%%input% 
-        ;T oolTip, %search%
-
-        ; check if the search matches a shortcut
-        ; iterate shortcuts
-        index = 0
-        Loop, %amountOfShortcuts%
-        {
-            cVal := % shortcuts[index, 0]        
-            ;M sgBox, %search% %cVal%
-            if(search = cVal)
-            {
-                search = % shortcuts[index, 1]
-                break
-            }    
-            index := index + 1
-        }    
-
-        GuiControl,, Edit1, %search% 
-        GuiControl,, InputText, %search% 
-        length := StrLen(search)
-        first_letter := SubStr(search, 1, 1) 
-        if(first_letter = ":" or first_letter = ".")
-        {
-            if(contentType != S.contentTypeCommands()) {
-                forceWindowListRefresh := 1
-            }
-            lastContentType := contentType
-            contentType := S.contentTypeCommands()
-            GoSub, RefreshWindowList
-        } else if length > 1          
-        {
-            if(contentType = S.contentTypeCommands()) {
-                contentType := lastContentType
-            }
-            GoSub, RefreshWindowList 
-        } 
-    } 
+    SetTimer, InputActiveTimer, 1
+     
 return 
 
+InputActiveTimer: 
+    if guiActive = 0 
+    {
+        GoSub, CloseGui
+        return
+    }  
+    Input, input, L1, {enter}{esc}{backspace}{up}{down}{pgup}{pgdn}{tab}{left}{right} 
+
+    if ErrorLevel = EndKey:enter 
+    { 
+        GoSub, ActivateWindow             
+        SetTimer, InputActiveTimer, Off
+        return 
+    } 
+
+    if ErrorLevel = EndKey:escape 
+    { 
+        GoSub, CloseGui 
+        SetTimer, InputActiveTimer, Off
+        return 
+    } 
+
+    if ErrorLevel = EndKey:backspace 
+    { 
+        GoSub, DeleteSearchChar 
+        return 
+    } 
+
+    if ErrorLevel = EndKey:up 
+    {         
+        Send, {up} 
+        return
+    } 
+
+    if ErrorLevel = EndKey:down 
+    { 
+        Send, {down} 
+        return 
+    } 
+
+    if ErrorLevel = EndKey:pgup 
+    { 
+        Send, {pgup} 
+        return
+    } 
+
+    if ErrorLevel = EndKey:pgdn 
+    { 
+        Send, {pgdn} 
+        return
+    }  
+    
+    if ErrorLevel = EndKey:tab 
+        if completion = 
+            return 
+        else 	
+            input = %completion% 
+
+    ; invoke digit shortcuts if applicable 
+    if S.digitShortcuts() <> 
+        if numwin <= 10 
+            if input in 1,2,3,4,5,6,7,8,9,0 
+            { 
+                if input = 0 
+                    input = 10  
+
+                if numwin < %input% 
+                { 
+                    if nomatchsound <> 
+                        SoundPlay, %nomatchsound% 
+                    return 
+                } 
+
+                ;T oolTip, %input%
+                ;GuiControl, choose, indexListView, %input%                     
+                selectedIndex = %input%
+                GoSub, ActivateWindow 
+                SetTimer, InputActiveTimer, Off
+                return 
+            } 
+
+    ; process typed character 
+
+    search = %search%%input% 
+    ;T oolTip, %search%
+
+    ; check if the search matches a shortcut
+    ; iterate shortcuts
+    index = 0
+    Loop, %amountOfShortcuts%
+    {
+        cVal := % shortcuts[index, 0]        
+        ;M sgBox, %search% %cVal%
+        if(search = cVal)
+        {
+            search = % shortcuts[index, 1]
+            break
+        }    
+        index := index + 1
+    }    
+
+    GuiControl,, Edit1, %search% 
+    GuiControl,, InputText, %search% 
+    length := StrLen(search)
+    first_letter := SubStr(search, 1, 1) 
+    if(first_letter = ":" or first_letter = ".")
+    {
+        if(contentType != S.contentTypeCommands()) {
+            forceWindowListRefresh := 1
+        }
+        lastContentType := contentType
+        contentType := S.contentTypeCommands()
+        GoSub, RefreshWindowList
+    } else if length > 1          
+    {
+        if(contentType = S.contentTypeCommands()) {
+            contentType := lastContentType
+        }
+        GoSub, RefreshWindowList 
+    } 
+return
+
 UpdateWindowArrays:
+    if(shiftPressed = 1) {
+        return
+    }
     if(contentType = S.contentTypeTrayIcons()) {            
         trayIcons := trayControl.list()
         numallwin := trayControl.Length()
@@ -592,6 +602,9 @@ UpdateWindowArrays:
 return
 
 RefreshWindowList:
+    if(shiftPressed = 1) {
+        return
+    }
     ; refresh the list of windows if necessary 
     filteredWindows.clear()
     if (dynamicwindowlist = "yes" or numallwin = 0 or forceWindowListRefresh = 1) 
@@ -800,7 +813,7 @@ matchesSearchString(string, search) {
 }
 
 CheckCompletion:
-    if(S.tabComplete()) {
+    if(S.tabComplete() = 0) {
         return
     }
     completion = 
@@ -1033,8 +1046,10 @@ ActivateWindow:
         return
     }
     
-    Gui, Submit    
-    guiActive := 0 
+    if(guiActive = 1) {
+        Gui, Submit    
+       guiActive := 0 
+    }
 
     if(S.saveMousePos()) {
         allWindows.storeMousePosForActiveWindow(lastActiveWindowId)
@@ -1091,3 +1106,40 @@ ActivateWindow:
         GoSub, HotkeyAction
     }
 return 
+
+FocusWindow:
+    WinGet, switcher_id, ID, A             
+    ; Assuming selectedIndex and filteredWindows are correctly initialized and populated
+    window := filteredWindows.get(selectedIndex)
+    hwnd := window.getHwnd()
+    title := window.getTitle()
+
+    ; Constants for ShowWindow and SetWindowPos
+    SW_RESTORE := 9
+    HWND_TOPMOST := -1
+    HWND_NOTOPMOST := -2
+    SWP_NOACTIVATE := 0x0010
+    SWP_NOSIZE := 0x0001
+    SWP_NOMOVE := 0x0002
+    SWP_SHOWWINDOW := 0x0040
+
+    ; Temporarily set focus to another window (e.g., the AHK script's own GUI)
+    if (DllCall("IsIconic", "Ptr", hwnd))
+    {
+        Gui, +LastFound  ; Make the AHK GUI the last found window
+        ;otherHwnd := WinExist()  ; Get its HWND
+        DllCall("ShowWindow", "Ptr", hwnd, "Int", SW_RESTORE)  ; Restore the target window
+        
+    }
+
+    ; Make the window topmost and then not topmost without activating it
+    DllCall("SetWindowPos", "Ptr", hwnd, "Ptr", HWND_TOPMOST, "int", 0, "int", 0, "int", 0, "int", 0, "uint", SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
+    ;Sleep, 100 ; Small delay to ensure the window settles
+    DllCall("SetWindowPos", "Ptr", hwnd, "Ptr", HWND_NOTOPMOST, "int", 0, "int", 0, "int", 0, "int", 0, "uint", SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
+
+    Tooltip, %title%
+    ;Sleep, 100
+    DllCall("SetForegroundWindow", "Ptr", switcher_id) 
+    ;DllCall("ShowWindow", "Ptr", switcher_id, "Int", SW_RESTORE)  ; Restore the target window
+    ;WinActivate, ahk_id %switcher_id%
+return

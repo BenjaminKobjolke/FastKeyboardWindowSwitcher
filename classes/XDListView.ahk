@@ -72,7 +72,7 @@ class XDListView {
         ;M sgBox, > %amount%
         if(amount < 1) {
             ToolTip, No filtered windows found
-            Sleep, 1000
+            Sleep, 100
             ToolTip
         }
         Loop %amount%
@@ -117,5 +117,10 @@ class XDListView {
         }
         this.updateColors(filteredWindows, contentType)
         return amount
+    }
+
+    selectedIndex() {
+        index := LV_GetNext()
+        return index
     }
 }

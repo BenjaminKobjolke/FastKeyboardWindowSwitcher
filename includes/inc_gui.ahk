@@ -7,7 +7,8 @@ SetupGui:
     Gui, Color, black,black
     WinSet, Transparent, % S.guiTransparency()
     
-    Gui,Font,s14 c%guiTextColor% bold,Calibri
+    statusBarFontSize := S.guiStatusBarFontSize()
+    Gui,Font,s%statusBarFontSize% c%guiTextColor% bold,Calibri
     Gui, Add, StatusBar,  vMyStatusBar  -Theme BackgroundSilver
     GoSub, UpdateStatusBar
     
@@ -32,7 +33,7 @@ SetupGui:
         Gui,Font,s%textSize% c%textColor% bold,Calibri
     }    
 
-    Gui, Add, ListView, vindexListView gMyListView hwndHLV x20 y20 -E0x200 AltSubmit -VScroll -HScroll -Multi -WantF2 -Hdr NoSort NoSortHdr 0x2000 -E0x200, %columns%
+    Gui, Add, ListView, vindexListView gMyListView gListViewHandler hwndHLV x20 y20 -E0x200 AltSubmit -VScroll -HScroll -Multi -WantF2 -Hdr NoSort NoSortHdr 0x2000 -E0x200, %columns%
     if S.guiShowHeader()
     {
         GuiControl, +Hdr, indexListView
@@ -41,6 +42,24 @@ SetupGui:
     CLV := New LV_Colors(HLV)
     xdListView := new XDListView()
     xdListView.setup(VD, S, CLV, digiShortcuts)
+return
+
+; Define the ListViewHandler function to handle changes in the ListView
+ListViewHandler:
+    return
+    if (A_GuiEvent == "I" || A_GuiEvent = "K")  ; I for item changed
+    {
+        ;selectedIndex :=  A_EventInfo   
+        selectedIndex := LV_GetNext() 
+        if (shiftPressed = 1)
+        {
+            ;ToolTip, %selectedIndex%
+            ;ToolTip, event %selectedIndex% 
+            GoSub, FocusWindow
+        } else {
+            ToolTip, no shift
+        }
+    }
 return
 
 MyListView:  
@@ -59,10 +78,46 @@ CloseGui:
     guiActive := 0
     Gui, cancel 
 
-    SetTimer,CheckIfGuiStillActive, Off
+    SetTimer, CheckIfGuiStillActive, Off
+    SetTimer, InputActiveTimer, Off
 return
 
 CheckIfGuiStillActive:
+    if GetKeyState("Shift", "P")
+    {
+        if (shiftPressed = 0) {
+            shiftPressed := 1
+            GoSub, UpdateStatusBar
+            selectedIndex := -1
+        }
+
+        newIndex := LV_GetNext()
+        if (newIndex = selectedIndex) {
+            return
+        }
+        selectedIndex := newIndex
+        GoSub, FocusWindow
+        return
+
+    } else {
+        if (shiftPressed = 1) {
+            shiftPressed := 0
+            ;ToolTip, shift released %switcher_id%
+            /*
+            SW_RESTORE := 9
+            DllCall("ShowWindow", "Ptr", switcher_id, "Int", SW_RESTORE)  ; Restore the target window
+            GoSub, UpdateGui
+            GoSub, UpdateStatusBar
+            
+            WinActivate, ahk_id %switcher_id%
+            */
+            selectedIndex := LV_GetNext()
+            GoSub, CloseGui
+            GoSub, ActivateWindow
+            return
+        }
+    }
+    
     id := WinActive("A")
     
     if(id <> switcher_id)
@@ -110,7 +165,12 @@ UpdateStatusBar:
         newText = %newText% | Pin tasks with F2 not supported for tray icons  
     } else {
         newText = %newText% | Pin / unpin tasks with F2 
-    }    
+    }
+
+    if(shiftPressed = 1) {
+        newText = %newText% | Preview mode
+    }
+
     SB_SetText(newText, 1)
 return
 
@@ -123,7 +183,7 @@ return
 ; 
 ; Handle mouse click events on the list box 
 ; 
-ListBoxClick:    
+ListBoxClick:
     if (A_GuiControlEvent = "Normal"
         and !GetKeyState("Down", "P") and !GetKeyState("Up", "P"))
         {
@@ -206,8 +266,8 @@ UpdateGui:
 
     
     column1Width := listWidth - processColumnWidth - desktopColumnWidth - statusColumnWidth
-    ;MsgBox, 1 %listWidth% 2 %column1Width% 3 %processColumnWidth% 4 %desktopColumnWidth %
-    ;MsgBox, %column1Width%
+    ;M sgBox, 1 %listWidth% 2 %column1Width% 3 %processColumnWidth% 4 %desktopColumnWidth %
+    ;M sgBox, %column1Width%
     LV_ModifyCol(1, column1Width)
     counter := 2
     LV_ModifyCol(counter, processColumnWidth)
@@ -218,7 +278,7 @@ UpdateGui:
 
     LV_ModifyCol(counter, statusColumnWidth)
 
-    ;MsgBox, %column1Width% %desktopColumnWidth% %listWidth%
+    ;M sgBox, %column1Width% %desktopColumnWidth% %listWidth%
     Gui, Show, % "x" x " y" y " w" width " h" height, fast keyboard window switcher
     guiActive := 1
     
@@ -234,5 +294,5 @@ UpdateGui:
     ; does not exist yet when RefreshWindowList is called. 
     WinGet, switcher_id, ID, A         
 
-    SetTimer, CheckIfGuiStillActive, 500
+    SetTimer, CheckIfGuiStillActive, 1
 return
