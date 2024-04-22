@@ -49,16 +49,8 @@ ListViewHandler:
     return
     if (A_GuiEvent == "I" || A_GuiEvent = "K")  ; I for item changed
     {
-        ;selectedIndex :=  A_EventInfo   
-        selectedIndex := LV_GetNext() 
-        if (shiftPressed = 1)
-        {
-            ;ToolTip, %selectedIndex%
-            ;ToolTip, event %selectedIndex% 
-            GoSub, FocusWindow
-        } else {
-            ToolTip, no shift
-        }
+        selectedIndex :=  A_EventInfo
+        ToolTip You selected row number %A_EventInfo%  
     }
 return
 
@@ -69,7 +61,7 @@ MyListView:
         ;T oolTip You double-clicked row number %A_EventInfo%. Text: "%RowText%"        
     }
     if (A_GuiEvent = "I") 
-    {        
+    {    
         selectedIndex :=  A_EventInfo    
     }    
 return
@@ -119,6 +111,12 @@ CheckIfGuiStillActive:
         }
     }
     
+    selectedIndex := LV_GetNext()
+    /*
+    window := filteredWindows.get(selectedIndex)
+    title := window.getTitle()
+    ToolTip, %selectedIndex% %title%
+    */
     id := WinActive("A")
     
     if(id <> switcher_id)

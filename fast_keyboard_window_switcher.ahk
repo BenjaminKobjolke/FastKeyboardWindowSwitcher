@@ -283,11 +283,11 @@ setActiveWindow(windowId) {
     class_name := activeWindow.getClassName()
     ;T oolTip, >%activeWindowId%< title: %title% class: %class_name%
     success := allWindows.increaseRunIndexForActiveWindow(windowId, highestRunIndex)
-    ;MsgBox, Success: %success%
+    ;M sgBox, Success: %success%
     ;if(success = 0) {
         forceWindowListRefresh := 1
     ;}
-    ;MsgBox, aha! %forceWindowListRefresh%
+    ;M sgBox, aha! %forceWindowListRefresh%
     GoSub, RefreshWindowList
 }
 
@@ -586,7 +586,7 @@ UpdateWindowArrays:
             title := SubStr(fileNameWithExt, 1, dotPos-1)            
 
             procname := allWindows.getProcessName(ahkID)
-            ;MsgBox, %title%
+            ;M sgBox, %title%
             
             if S.addProcessNameToTitle()
             {
@@ -745,7 +745,6 @@ RefreshWindowList:
     if(noWindowsFound) {
       return
     } 
-
 
     if amount = 1 
         if autoActivateIfOnlyOne 
@@ -1020,6 +1019,9 @@ return
 ActivateWindow:
     ;Gui, Submit
     ;return
+    if(selectedIndex < 1) {
+        selectedIndex := 1
+    }
     window := filteredWindows.get(selectedIndex)
     if(contentType = S.contentTypeTrayIcons()) {     
         window_id := window.getHwnd()
@@ -1057,6 +1059,7 @@ ActivateWindow:
     }
 
     title := window.getTitle()
+    ;M sgBox, %title%
     if(contentType = S.contentTypeCommands()) {
         ;index := selectedIndex - 1
         commandWindow := filteredWindows.get(selectedIndex)
