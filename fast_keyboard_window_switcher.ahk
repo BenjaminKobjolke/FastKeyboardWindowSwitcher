@@ -76,7 +76,7 @@ shiftPressed := 0
 if S.useVirtualDesktops() = 1
 {
     DetectHiddenWindows On
-    #Include, %A_ScriptDir%/github_modules/VD.ahk/_VD.ahk
+    #Include, %A_ScriptDir%/github_modules/VD.ahk/VD.ahk
     dummyFunction1() {
         static dummyStatic1 := VD.init()
     }   
